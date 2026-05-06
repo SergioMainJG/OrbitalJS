@@ -1,0 +1,13 @@
+{
+  "recommendations": [
+    "solidjs-community.solid-snippets",
+    "bradlc.vscode-tailwindcss",
+    "oxc.oxc-vscode",
+    "esbenp.prettier-vscode",
+    "vitest.explorer",
+    "pmneo.tsimporter",
+    "usernamehw.errorlens",
+    "christian-kohler.path-intellisense"
+  ],
+  "unwantedRecommendations": ["dbaeumer.vscode-eslint", "rvest.vs-code-prettier"]
+}

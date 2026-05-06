@@ -1,0 +1,21 @@
+* text=auto eol=lf
+*.ts    text eol=lf
+*.tsx   text eol=lf
+*.html  text eol=lf
+*.svg   text eol=lf
+*.json  text eol=lf
+*.txt   text eol=lf
+*.yaml  text eol=lf
+*.yml   text eol=lf
+*.toml  text eol=lf
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.svgz  binary
+*.pdf   binary
+package-lock.json   binary
+yarn.lock           binary
+pnpm-lock.yaml      binary
+bun-lock.tml        binary

@@ -1,0 +1,44 @@
+{
+  "$schema": "https://raw.githubusercontent.com/oxc-project/oxc/main/npm/oxlint/configuration_schema.json",
+  "plugins": ["import", "typescript", "unicorn", "jsdoc"],
+
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn",
+    "perf": "warn",
+    "style": "off"
+  },
+
+  "rules": {
+    "no-console": ["warn", { "allow": ["warn", "error", "info"] }],
+
+    "no-debugger": "error",
+    "eqeqeq": ["error", "always"],
+
+    "no-var": "error",
+    "prefer-const": "error",
+    "no-unused-vars": ["error", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }],
+    "no-shadow": "warn",
+    "typescript/no-explicit-any": "error",
+    "typescript/prefer-as-const": "error",
+    "typescript/consistent-type-imports": [
+      "error",
+      { "prefer": "type-imports", "fixStyle": "inline-type-imports" }
+    ],
+    "typescript/ban-ts-comment": [
+      "error",
+      {
+        "ts-ignore": true,
+        "ts-expect-error": "allow-with-description",
+        "ts-nocheck": true
+      }
+    ],
+    "import/no-cycle": "error",
+    "unicorn/filename-case": ["error", { "case": "kebabCase" }],
+    "unicorn/no-array-for-each": "off",
+    "unicorn/prefer-node-protocol": "off",
+    "unicorn/no-nested-ternary": "error"
+  },
+
+  "ignorePatterns": ["dist", "node_modules", "*.config.*", "*.d.ts", ".gitignore", ".gitattributes"]
+}

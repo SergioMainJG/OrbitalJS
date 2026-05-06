@@ -1,0 +1,7 @@
+{
+  "indentWidth": 2,
+  "lineWidth": 100,
+  "quoteStyle": "single",
+  "trailingComma": "all",
+  "ignore": ["**/*.tsx", "**/*.css", "**/*.html"]
+}
