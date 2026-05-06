@@ -163,4 +163,20 @@ npm install
 npm run dev
 ```
 
-> # El campo `packageManager` en `package.json` está fijado a `bun@1.3.13`. Con npm, ignora ese campo.
+> El campo `packageManager` en `package.json` está fijado a `bun@1.3.13`. Con npm, ignora ese campo.
+
+## Aclaración sobre posible error en `vite.config.ts`
+
+Se está usando [rolldown](https://rolldown.rs) en vez de [rollup](https://rollupjs.org), el nuevo motor que vite que
+
+## Testing
+
+Se va a crear una rama de testing. Se van a subir los archivos de testing, en los cuales ustedes tienen toda la libertad de modificar, cambiar nombre, etc. Aunque se espera que cumplan con las reglas estableciddas con las nomenclaturas, etc. El testing tiene proposito de disminuir errores en los merge y en tiempo de producción.
+Yo, **Sergio Arce**, soy quien va a escribir el testing. Si no saben como usar `vitest` o realizar testing, no tengan duda en pasar la issue conmigo, o bien, usar alguna IA **(solamente asegurense de usar todo el issue completo como referencia)** para modificar el test.
+Cada que hacen un commit, se ejecuta un commit de testing automatico, tanto en local como en github (el wf que implementé).
+
+Voy a implementar el testing correspondiente a cada issue de cada sprint, y reitero, reimplementen si así lo consideran necesarios
+
+## Production URL
+
+> ### See the production in [orbitaljs](https://orbitaljs.sergioar.dev)
