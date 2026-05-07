@@ -1,10 +1,10 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from "vitest";
 
 describe(`earth-orbit-validation.test.ts, testing para earth-orbit-valiation.ts!`, () => {
   it(`Hola Mundo es Hola mundo!`, () => {
-    console.warn('No olvides descomentar el codigo y borrar el describe que funciona por ahora');
-    console.info('Recuerda que puedes modificar este archivo a tu conveniencia');
-    expect('Hello World').toBe('Hello World');
+    console.warn("No olvides descomentar el codigo y borrar el describe que funciona por ahora");
+    console.info("Recuerda que puedes modificar este archivo a tu conveniencia");
+    expect("Hello World").toBe("Hello World");
   });
 });
 // /* eslint-disable */

@@ -1,10 +1,10 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from "vitest";
 
 describe(`euler-step.test.ts, testing para euler-step.ts!`, () => {
   it(`Hola Mundo es Hola mundo!`, () => {
-    console.warn('No olvides descomentar el codigo y borrar el describe que funciona por ahora');
-    console.info('Recuerda que puedes modificar este archivo a tu conveniencia');
-    expect('Hello World').toBe('Hello World');
+    console.warn("No olvides descomentar el codigo y borrar el describe que funciona por ahora");
+    console.info("Recuerda que puedes modificar este archivo a tu conveniencia");
+    expect("Hello World").toBe("Hello World");
   });
 });
 
