@@ -31,7 +31,7 @@
     "prettier-plugin-tailwindcss": "^0.8.0",
     "simple-git-hooks": "^2.13.1",
     "solid-devtools": "^0.34.3",
-    "typescript": "^5.7.2",
+    "typescript": "^6.0.3",
     "vite": "npm:rolldown-vite@latest",
     "vite-plugin-solid": "2.11.9",
     "vitest": "^4.0.0"
@@ -47,5 +47,6 @@
   "simple-git-hooks": {
     "pre-commit": "bun run fmt:check && bun run lint",
     "pre-push": "bun run check"
-  }
+  },
+  "fetch:planets": "bun run scripts/fetch-planets.ts"
 }
