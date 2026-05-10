@@ -1,7 +1,7 @@
 import type { BodyState } from "@/types/body-state";
 
 // Constante gravitacional universal
-const G = 6.674e-11;
+const G = (4 * Math.PI * Math.PI) / (365.25 * 365.25);
 
 export function eulerStep(state: BodyState[], dt: number): BodyState[] {
   return state.map((body, i) => {
@@ -20,7 +20,7 @@ export function eulerStep(state: BodyState[], dt: number): BodyState[] {
 
       //Distancia en metros entre los dos cuerpos
       const dist = Math.sqrt(dx * dx + dy * dy);
-
+      if (dist === 0) continue; // evita división por cero
       //dist^3 para aplicar la ley de gravedad y normalizar el vector dirección
       const dist3 = dist * dist * dist;
 
