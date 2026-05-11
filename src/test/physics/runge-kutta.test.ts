@@ -1,9 +1,7 @@
-/* tsc- */
-/* oxc- */
-/* prettier-ignore */
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from "vitest";
+import { type BodyState } from "@/types";
 import { rk4Step } from "@/physics/runge-kutta";
-import type { BodyState } from "@/types";
+import { eulerStep } from "@/physics/euler-integrator";
 
 const G = (4 * Math.PI * Math.PI) / (365.25 * 365.25);
 
@@ -38,19 +36,19 @@ describe(`test "runge-kutta.test.ts" para "runge-kutta.ts". Falta el modulo de E
     }
   });
 
-  // it('debe preservar el nombre y la masa de cada cuerpo', () => {
-  //   const state: BodyState[] = [
-  //     { name: 'Sol', x: 0, y: 0, vx: 0, vy: 0, mass: 1 },
-  //     { name: 'Tierra', x: 1, y: 0, vx: 0, vy: 0.017202, mass: 3.003e-6 },
-  //   ];
+  it("Must keep the name and mass of each body", () => {
+    const state: BodyState[] = [
+      { name: "Sol", x: 0, y: 0, vx: 0, vy: 0, mass: 1 },
+      { name: "Tierra", x: 1, y: 0, vx: 0, vy: 0.017202, mass: 3.003e-6 },
+    ];
 
-  //   const result = rk4Step(state, 1);
+    const result = rk4Step(state, 1);
 
-  //   expect(result[0].name).toBe('Sol');
-  //   expect(result[0].mass).toBe(1);
-  //   expect(result[1].name).toBe('Tierra');
-  //   expect(result[1].mass).toBeCloseTo(3.003e-6, 10);
-  // });
+    expect(result[0].name).toBe("Sol");
+    expect(result[0].mass).toBe(1);
+    expect(result[1].name).toBe("Tierra");
+    expect(result[1].mass).toBeCloseTo(3.003e-6, 10);
+  });
 });
 
 describe("rk4Step - body within any gravitatory interaction", () => {
@@ -83,20 +81,20 @@ describe("rk4Step - body within any gravitatory interaction", () => {
 });
 
 describe("rk4Step - evaluating k1, k2, k3, k4", () => {
-  // it('debe producir un resultado diferente a un paso Euler simple (usa 4 evaluaciones)', () => {
-  //   const vEarth = Math.sqrt(G / 1);
-  //   const state: BodyState[] = [
-  //     { name: 'Sol', x: 0, y: 0, vx: 0, vy: 0, mass: 1 },
-  //     { name: 'Tierra', x: 1, y: 0, vx: 0, vy: vEarth, mass: 3.003e-6 },
-  //   ];
-  //   const dt = 1;
+  it("Must give a different result for a simple euler step(usa 4 evaluations)", () => {
+    const vEarth = Math.sqrt(G / 1);
+    const state: BodyState[] = [
+      { name: "Sol", x: 0, y: 0, vx: 0, vy: 0, mass: 1 },
+      { name: "Tierra", x: 1, y: 0, vx: 0, vy: vEarth, mass: 3.003e-6 },
+    ];
+    const dt = 1;
 
-  //   const eulerResult = eulerStep(state, dt);
-  //   const rk4Result = rk4Step(state, dt);
+    const eulerResult = eulerStep(state, dt);
+    const rk4Result = rk4Step(state, dt);
 
-  //   expect(rk4Result[1].x).not.toBeCloseTo(eulerResult[1].x, 5);
-  //   expect(rk4Result[1].y).not.toBeCloseTo(eulerResult[1].y, 5);
-  // });
+    expect(rk4Result[1].x).not.toBeCloseTo(eulerResult[1].x, 5);
+    expect(rk4Result[1].y).not.toBeCloseTo(eulerResult[1].y, 6);
+  });
 
   it("RK4 must follow y_{n+1} = y_n + (k1 + 2k2 + 2k3 + k4) * dt / 6", () => {
     const state: BodyState[] = [
@@ -196,74 +194,74 @@ describe("rk4Step - complete state 4N components", () => {
   });
 });
 
-// describe('rk4Step - precisión superior a Euler', () => {
-//   it('RK4 debe ser más preciso que Euler para la órbita terrestre', () => {
-//     const vEarth = Math.sqrt(G / 1);
-//     const initialState: BodyState[] = [
-//       { name: 'Sol', x: 0, y: 0, vx: 0, vy: 0, mass: 1 },
-//       { name: 'Tierra', x: 1, y: 0, vx: 0, vy: vEarth, mass: 3.003e-6 },
-//     ];
-//     const dt = 0.5;
-//     const steps = 100;
+describe("rk4Step - precisión superior a Euler", () => {
+  it("RK4 debe ser más preciso que Euler para la órbita terrestre", () => {
+    const vEarth = Math.sqrt(G / 1);
+    const initialState: BodyState[] = [
+      { name: "Sol", x: 0, y: 0, vx: 0, vy: 0, mass: 1 },
+      { name: "Tierra", x: 1, y: 0, vx: 0, vy: vEarth, mass: 3.003e-6 },
+    ];
+    const dt = 0.5;
+    const steps = 100;
 
-//     let eulerState = initialState.map((b) => ({ ...b }));
-//     let rk4State = initialState.map((b) => ({ ...b }));
+    let eulerState = initialState.map((b) => ({ ...b }));
+    let rk4State = initialState.map((b) => ({ ...b }));
 
-//     for (let i = 0; i < steps; i++) {
-//       eulerState = eulerStep(eulerState, dt);
-//       rk4State = rk4Step(rk4State, dt);
-//     }
+    for (let i = 0; i < steps; i++) {
+      eulerState = eulerStep(eulerState, dt);
+      rk4State = rk4Step(rk4State, dt);
+    }
 
-//     const eulerDist = Math.sqrt(eulerState[1].x ** 2 + eulerState[1].y ** 2);
-//     const rk4Dist = Math.sqrt(rk4State[1].x ** 2 + rk4State[1].y ** 2);
+    const eulerDist = Math.sqrt(eulerState[1].x ** 2 + eulerState[1].y ** 2);
+    const rk4Dist = Math.sqrt(rk4State[1].x ** 2 + rk4State[1].y ** 2);
 
-//     const eulerDistError = Math.abs(eulerDist - 1);
-//     const rk4DistError = Math.abs(rk4Dist - 1);
+    const eulerDistError = Math.abs(eulerDist - 1);
+    const rk4DistError = Math.abs(rk4Dist - 1);
 
-//     expect(rk4DistError).toBeLessThan(eulerDistError);
-//   });
+    expect(rk4DistError).toBeLessThan(eulerDistError);
+  });
 
-//   it('RK4 debe conservar mejor la energía que Euler', () => {
-//     const vEarth = Math.sqrt(G / 1);
-//     const initialState: BodyState[] = [
-//       { name: 'Sol', x: 0, y: 0, vx: 0, vy: 0, mass: 1 },
-//       { name: 'Tierra', x: 1, y: 0, vx: 0, vy: vEarth, mass: 3.003e-6 },
-//     ];
+  it("RK4 debe conservar mejor la energía que Euler", () => {
+    const vEarth = Math.sqrt(G / 1);
+    const initialState: BodyState[] = [
+      { name: "Sol", x: 0, y: 0, vx: 0, vy: 0, mass: 1 },
+      { name: "Tierra", x: 1, y: 0, vx: 0, vy: vEarth, mass: 3.003e-6 },
+    ];
 
-//     const kineticEnergy = (s: BodyState[]) =>
-//       s.reduce((sum, b) => sum + 0.5 * b.mass * (b.vx ** 2 + b.vy ** 2), 0);
-//     const potentialEnergy = (s: BodyState[]) => {
-//       let pe = 0;
-//       for (let i = 0; i < s.length; i++) {
-//         for (let j = i + 1; j < s.length; j++) {
-//           const dx = s[j].x - s[i].x;
-//           const dy = s[j].y - s[i].y;
-//           const dist = Math.sqrt(dx * dx + dy * dy);
-//           pe -= (G * s[i].mass * s[j].mass) / dist;
-//         }
-//       }
-//       return pe;
-//     };
-//     const totalEnergy = (s: BodyState[]) => kineticEnergy(s) + potentialEnergy(s);
+    const kineticEnergy = (s: BodyState[]) =>
+      s.reduce((sum, b) => sum + 0.5 * b.mass * (b.vx ** 2 + b.vy ** 2), 0);
+    const potentialEnergy = (s: BodyState[]) => {
+      let pe = 0;
+      for (let i = 0; i < s.length; i++) {
+        for (let j = i + 1; j < s.length; j++) {
+          const dx = s[j].x - s[i].x;
+          const dy = s[j].y - s[i].y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          pe -= (G * s[i].mass * s[j].mass) / dist;
+        }
+      }
+      return pe;
+    };
+    const totalEnergy = (s: BodyState[]) => kineticEnergy(s) + potentialEnergy(s);
 
-//     const initialEnergy = totalEnergy(initialState);
+    const initialEnergy = totalEnergy(initialState);
 
-//     let eulerState = initialState.map((b) => ({ ...b }));
-//     let rk4State = initialState.map((b) => ({ ...b }));
-//     const dt = 0.5;
-//     const steps = 200;
+    let eulerState = initialState.map((b) => ({ ...b }));
+    let rk4State = initialState.map((b) => ({ ...b }));
+    const dt = 0.5;
+    const steps = 200;
 
-//     for (let i = 0; i < steps; i++) {
-//       eulerState = eulerStep(eulerState, dt);
-//       rk4State = rk4Step(rk4State, dt);
-//     }
+    for (let i = 0; i < steps; i++) {
+      eulerState = eulerStep(eulerState, dt);
+      rk4State = rk4Step(rk4State, dt);
+    }
 
-//     const eulerEnergyError = Math.abs(totalEnergy(eulerState) - initialEnergy);
-//     const rk4EnergyError = Math.abs(totalEnergy(rk4State) - initialEnergy);
+    const eulerEnergyError = Math.abs(totalEnergy(eulerState) - initialEnergy);
+    const rk4EnergyError = Math.abs(totalEnergy(rk4State) - initialEnergy);
 
-//     expect(rk4EnergyError).toBeLessThan(eulerEnergyError);
-//   });
-// });
+    expect(rk4EnergyError).toBeLessThan(eulerEnergyError);
+  });
+});
 
 describe("rk4Step - multiple steps", () => {
   it("must execute 730 steps without any divergence", () => {

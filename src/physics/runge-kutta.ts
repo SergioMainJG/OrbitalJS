@@ -20,6 +20,7 @@ const evalDerivatives = (state: BodyState[]): Derivative[] => {
       const dx = state[j]!.x - body.x;
       const dy = state[j]!.y - body.y;
       const distSq = dx * dx + dy * dy;
+      if (distSq === 0) continue;
       const dist = Math.sqrt(distSq);
       const distCubed = distSq * dist;
 
