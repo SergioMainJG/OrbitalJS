@@ -1,4 +1,4 @@
-import type { BodyState } from "@/types/body-state";
+import type { BodyState } from "@/types";
 
 // Constante gravitacional universal
 const G = (4 * Math.PI * Math.PI) / (365.25 * 365.25);
