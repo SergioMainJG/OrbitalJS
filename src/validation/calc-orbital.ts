@@ -1,11 +1,11 @@
-/* 
-*calc distancia/error orbital 
-*/
+/*
+ *calc distancia/error orbital
+ */
 export function calculateOrbitalError(
   initialX: number,
   initialY: number,
   finalX: number,
-  finalY: number
+  finalY: number,
 ) {
   const dx = finalX - initialX;
   const dy = finalY - initialY;
