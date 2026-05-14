@@ -7,13 +7,15 @@ import devtools from 'solid-devtools/vite';
 import tailwindcss from '@tailwindcss/vite';
 import path from 'node:path';
 
-// oxlint-disable-next-line import/no-unassigned-import
-//@ts-expect-error
 export default defineConfig(({ mode }) => {
   const isDev = mode === 'development';
 
   return {
-    plugins: [isDev && devtools({ autoname: true }), solidPlugin(), tailwindcss()],
+    plugins: [
+      isDev && devtools({ autoname: true }),
+      solidPlugin(),
+      tailwindcss()
+    ],
 
     resolve: {
       alias: {
@@ -25,10 +27,9 @@ export default defineConfig(({ mode }) => {
         '@/types': path.resolve(__dirname, 'src/types'),
         '@/constants': path.resolve(__dirname, 'src/constants'),
         '@/utils': path.resolve(__dirname, 'src/utils'),
-
         daisyui: path.resolve(__dirname, 'node_modules/daisyui/index.js'),
       },
-      conditions: ['browser'],
+      conditions: ['development', 'browser'],
     },
 
     server: {
@@ -41,17 +42,8 @@ export default defineConfig(({ mode }) => {
       target: 'esnext',
       outDir: 'dist',
       chunkSizeWarningLimit: 500,
-
       minify: true,
-
       cssMinify: true,
-
-      ...(isDev
-        ? {}
-        : {
-            terserOptions: undefined,
-          }),
-
       rollupOptions: {
         output: {
           advancedChunks: {
@@ -79,16 +71,14 @@ export default defineConfig(({ mode }) => {
           assetFileNames: 'assets/[name]-[hash][extname]',
         },
       },
-      //@ts-expect-error
+      // @ts-expect-error
       sourcemap: process.env.SOURCE_MAP === 'true' ? 'hidden' : false,
       reportCompressedSize: true,
     },
+
     optimizeDeps: {
       include: ['solid-js', 'solid-js/web', 'solid-js/store', 'chart.js'],
       exclude: ['solid-devtools', 'daisyui', '@tailwindcss/vite'],
-    },
-    experimental: {
-      enableNativePlugin: 'v1',
     },
 
     test: {
@@ -96,6 +86,19 @@ export default defineConfig(({ mode }) => {
       globals: true,
       setupFiles: ['./src/test/setup.ts'],
       include: ['src/**/*.{test,spec}.{js,ts,tsx}'],
+      server: {
+        deps: {
+          inline: [/solid-js/, /@solidjs\/testing-library/],
+        },
+      },
+      deps: {
+        optimizer: {
+          web: {
+            enabled: true,
+            include: ['solid-js', 'solid-js/web', 'solid-js/store', '@solidjs/testing-library'],
+          },
+        },
+      },
       coverage: {
         provider: 'v8',
         reporter: ['text', 'json', 'html'],
@@ -104,13 +107,6 @@ export default defineConfig(({ mode }) => {
           lines: 60,
           functions: 60,
           branches: 50,
-        },
-      },
-      deps: {
-        optimizer: {
-          web: {
-            include: ['solid-js', 'chart.js'],
-          },
         },
       },
     },
