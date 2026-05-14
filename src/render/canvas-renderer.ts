@@ -8,8 +8,13 @@ export class CanvasRenderer {
   private width: number;
   private height: number;
 
-  constructor(canvas: HTMLCanvasElement, width: number, height: number) {
-    this.ctx = canvas.getContext("2d")!;
+  constructor(
+    canvas: HTMLCanvasElement,
+    width: number,
+    height: number,
+    context: CanvasRenderingContext2D,
+  ) {
+    this.ctx = context;
     this.width = width;
     this.height = height;
     this.camera = new Camera(width, height, 100);

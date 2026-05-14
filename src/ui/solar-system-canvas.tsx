@@ -71,11 +71,17 @@ export function SolarSystemCanvas() {
   onMount(() => {
     if (!canvasRef) return;
 
+    const context = canvasRef.getContext('2d');
+
+    if (!context) {
+      return;
+    }
+
     const rect = canvasRef.parentElement?.getBoundingClientRect();
     const width = rect?.width || window.innerWidth;
     const height = rect?.height || window.innerHeight;
 
-    renderer = new CanvasRenderer(canvasRef, width, height);
+    renderer = new CanvasRenderer(canvasRef, width, height, context);
     animationLoop = new AnimationLoop(updateMockOrbit, renderScene);
     animationLoop.start();
 
