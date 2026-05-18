@@ -1,7 +1,7 @@
+import { UNIVERSAL_CONSTS } from "@/constants";
 import type { BodyState } from "@/types";
 
-// Constante gravitacional universal
-const G = (4 * Math.PI * Math.PI) / (365.25 * 365.25);
+const { G } = UNIVERSAL_CONSTS;
 
 export function eulerStep(state: BodyState[], dt: number): BodyState[] {
   return state.map((body, i) => {
@@ -29,17 +29,13 @@ export function eulerStep(state: BodyState[], dt: number): BodyState[] {
       ay += (G * other.mass * dy) / dist3;
     }
 
-    //velocidad nueva = velocidad actual + aceleración × tiempo
-    const vxNew = body.vx + ax * dt;
-    const vyNew = body.vy + ay * dt;
-
     //posición nueva = posición actual + velocidad nueva × tiempo
     return {
       ...body,
-      vx: vxNew,
-      vy: vyNew,
-      x: body.x + vxNew * dt,
-      y: body.y + vyNew * dt,
+      vx: body.vx + ax * dt,
+      vy: body.vy + ay * dt,
+      x: body.x + body.vx * dt, // ← velocidad ANTERIOR
+      y: body.y + body.vy * dt, // ← velocidad ANTERIOR
     };
   });
 }
