@@ -1,13 +1,7 @@
-import type { BodyState } from "@/types";
+import { UNIVERSAL_CONSTS } from "@/constants";
+import type { BodyState, Derivative } from "@/types";
 
-const G = (4 * Math.PI * Math.PI) / (365.25 * 365.25);
-
-interface Derivative {
-  dx: number;
-  dy: number;
-  dvx: number;
-  dvy: number;
-}
+const { G } = UNIVERSAL_CONSTS;
 
 const evalDerivatives = (state: BodyState[]): Derivative[] => {
   return state.map((body, i) => {
@@ -32,15 +26,14 @@ const evalDerivatives = (state: BodyState[]): Derivative[] => {
   });
 };
 
-const advance = (state: BodyState[], derivs: Derivative[], scale: number): BodyState[] => {
-  return state.map((body, i) => ({
+const advance = (state: BodyState[], derivs: Derivative[], scale: number): BodyState[] =>
+  state.map((body, i) => ({
     ...body,
     x: body.x + derivs[i]!.dx * scale,
     y: body.y + derivs[i]!.dy * scale,
     vx: body.vx + derivs[i]!.dvx * scale,
     vy: body.vy + derivs[i]!.dvy * scale,
   }));
-};
 
 export const rk4Step = (state: BodyState[], dt: number): BodyState[] => {
   const k1 = evalDerivatives(state);

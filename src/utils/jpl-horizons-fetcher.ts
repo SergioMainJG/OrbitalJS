@@ -100,6 +100,7 @@ export async function fetchHorizonsVector(
   } catch (cause) {
     throw new Error(
       `[jpl-horizons-fetcher] Error de red al contactar JPL Horizons para NAIF ${naifId}: ${String(cause)}`,
+      { cause: cause },
     );
   }
 
