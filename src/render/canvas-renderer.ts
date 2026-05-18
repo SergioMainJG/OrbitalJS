@@ -1,5 +1,6 @@
 import { type RenderBody } from "@/types";
 import { Camera } from "./camera";
+import { drawPlanets } from "./draw-planets";
 
 export class CanvasRenderer {
   private ctx: CanvasRenderingContext2D;
@@ -62,25 +63,7 @@ export class CanvasRenderer {
 
   render(bodies: RenderBody[]): void {
     this.clear();
-
-    for (const body of bodies) {
-      this.camera.applyTransform(this.ctx);
-
-      this.ctx.beginPath();
-      this.ctx.arc(body.x, body.y, body.radius / this.camera.scale, 0, Math.PI * 2);
-      this.ctx.fillStyle = body.color;
-      this.ctx.fill();
-
-      this.ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
-      this.ctx.lineWidth = 1 / this.camera.scale;
-      this.ctx.stroke();
-
-      this.ctx.fillStyle = "#ffffff";
-      this.ctx.font = `${12 / this.camera.scale}px "Courier New", monospace`;
-      this.ctx.fillText(body.name, body.x + 0.08, body.y - 0.08);
-
-      this.camera.restore(this.ctx);
-    }
+    drawPlanets(this.ctx, bodies, this.camera.scale, this.width / 2, this.height / 2);
   }
 
   resize(width: number, height: number): void {
