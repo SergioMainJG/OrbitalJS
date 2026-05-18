@@ -20,6 +20,10 @@ export class Camera {
     this.centerY = height / 2;
   }
 
+  autoScale(maxOrbitAU: number, padding: number = 1.25): void {
+    this.scale = Math.min(this.width, this.height) / (maxOrbitAU * 2 * padding);
+  }
+
   applyTransform(ctx: CanvasRenderingContext2D): void {
     ctx.save();
     ctx.translate(this.centerX, this.centerY);

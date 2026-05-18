@@ -1,4 +1,4 @@
-import type { BodyState } from "../types/body-state.interface";
+import type { BodyState } from "./body-state.interface";
 
 export interface RenderBody extends BodyState {
   radius: number;

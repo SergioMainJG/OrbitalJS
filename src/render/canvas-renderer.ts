@@ -1,4 +1,4 @@
-import type { RenderBody } from "./render-body.interface";
+import { type RenderBody } from "@/types";
 import { Camera } from "./camera";
 
 export class CanvasRenderer {
@@ -7,17 +7,21 @@ export class CanvasRenderer {
   private starsCanvas: HTMLCanvasElement | null = null;
   private width: number;
   private height: number;
+  private maxOrbitAU: number;
 
   constructor(
     canvas: HTMLCanvasElement,
     width: number,
     height: number,
     context: CanvasRenderingContext2D,
+    maxOrbitAU: number = 1.52,
   ) {
     this.ctx = context;
     this.width = width;
     this.height = height;
-    this.camera = new Camera(width, height, 100);
+    this.maxOrbitAU = maxOrbitAU;
+    this.camera = new Camera(width, height);
+    this.camera.autoScale(maxOrbitAU);
 
     canvas.width = width;
     canvas.height = height;
@@ -83,6 +87,7 @@ export class CanvasRenderer {
     this.width = width;
     this.height = height;
     this.camera.resize(width, height);
+    this.camera.autoScale(this.maxOrbitAU);
 
     const canvas = this.ctx.canvas;
     canvas.width = width;
