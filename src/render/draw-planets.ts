@@ -44,7 +44,7 @@ export function drawPlanets(
       glow.addColorStop(1, "rgba(249, 115, 22, 0)");
       ctx.beginPath();
       ctx.arc(px, py, glowRadius, 0, Math.PI * 2);
-      ctx.fillStyle = glow as unknown as string;
+      ctx.fillStyle = glow;
       ctx.fill();
     }
 
