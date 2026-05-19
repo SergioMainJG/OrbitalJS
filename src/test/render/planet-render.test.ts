@@ -1,7 +1,7 @@
 /* eslint-disable */
 /* prettier-ignore */
 import { describe, expect, it } from 'vitest';
-import { addTrailPoint, getPlanetColor, getPlanetRadius } from "@/render/planet-renderer";
+import { addTrailPoint, getPlanetColor, getPlanetRadius } from "@/render/";
 import type { TrailPoint } from "@/types";
 
 describe("getPlanetColor", () => {

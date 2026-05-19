@@ -215,7 +215,7 @@ function parseStateVector(block: string): StateVector {
   function extractComponent(label: string): number {
     // Escapa el label para usarlo en regex (VX, VY, VZ contienen nada especial, pero es buena práctica)
     const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const pattern = new RegExp(`${escapedLabel}\\s*=\\s*([+-]?\\d+\\.\\d+[Ee][+-]?\\d+)`, "i");
+    const pattern = new RegExp(`(?<![A-Z])${escapedLabel}\\s*=\\s*([+-]?\\d+\\.\\d+[Ee][+-]?\\d+)`);
     const match = flat.match(pattern);
 
     if (!match?.[1]) {
