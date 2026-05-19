@@ -1,7 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { describe, it } from 'vitest';
 
 describe('lógica de montaje (orbita-js.tsx)', () => {
-  it('Esto tiene que cambiar, lo pongo en true pq tengo que realizar toddos los demas test primero', () => {
-    expect(true).toBe(true);
+  it.skip('no tiene clases inesperadas fuera de las definidas', () => {
+    // TODO: Implement this test
   });
 });
