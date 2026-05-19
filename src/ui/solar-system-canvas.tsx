@@ -1,75 +1,34 @@
-import { onMount, onCleanup, createSignal } from 'solid-js';
-import { CanvasRenderer } from '../render/canvas-renderer';
-import { AnimationLoop } from '../render/animation-loop';
-import { getPlanetColor, getPlanetRadius } from '../render/planet-renderer';
-import { type RenderBody } from '@/types';
+import { onMount, onCleanup } from 'solid-js';
+import { CanvasRenderer } from '@/render/canvas-renderer';
+import { AnimationLoop } from '@/render/animation-loop';
+import { bodies, setBodies, setCurrentDay, simSpeed, MAX_ORBIT_AU } from '@/state';
 
-const MAX_ORBIT_AU = 1.52;
+const angles = { Earth: 0, Mars: 0, Venus: 0 };
+let dayCounter = 0;
 
-const mockBodies: RenderBody[] = [
-  {
-    name: 'Sun',
-    x: 0,
-    y: 0,
-    radius: getPlanetRadius(1),
-    color: getPlanetColor('Sun'),
-    mass: 1,
-    vx: 0,
-    vy: 0,
-  },
-  {
-    name: 'Earth',
-    x: 1.0,
-    y: 0,
-    radius: getPlanetRadius(3e-6),
-    color: getPlanetColor('Earth'),
-    mass: 3e-6,
-    vx: 0,
-    vy: 0,
-  },
-  {
-    name: 'Mars',
-    x: 1.52,
-    y: 0,
-    radius: getPlanetRadius(3.2e-7),
-    color: getPlanetColor('Mars'),
-    mass: 3.2e-7,
-    vx: 0,
-    vy: 0,
-  },
-  {
-    name: 'Venus',
-    x: 0.72,
-    y: 0,
-    radius: getPlanetRadius(2.4e-6),
-    color: getPlanetColor('Venus'),
-    mass: 2.4e-6,
-    vx: 0,
-    vy: 0,
-  },
-];
-
-export function SolarSystemCanvas() {
+function SolarSystemCanvas() {
+  let containerRef: HTMLDivElement | undefined;
   let canvasRef: HTMLCanvasElement | undefined;
   let renderer: CanvasRenderer | null = null;
   let animationLoop: AnimationLoop | null = null;
 
-  const [bodies, setBodies] = createSignal<RenderBody[]>(mockBodies);
-
-  const angles = { Earth: 0, Mars: 0, Venus: 0 };
-
   const updateMockOrbit = (dt: number) => {
+    const speed = simSpeed();
+
     const speedEarth = (Math.PI * 2) / 5;
     const speedMars = (Math.PI * 2) / 8;
     const speedVenus = (Math.PI * 2) / 3.5;
 
-    angles.Earth += speedEarth * dt;
-    angles.Mars += speedMars * dt;
-    angles.Venus += speedVenus * dt;
+    angles.Earth += speedEarth * dt * speed;
+    angles.Mars += speedMars * dt * speed;
+    angles.Venus += speedVenus * dt * speed;
 
     if (angles.Earth > Math.PI * 2) angles.Earth -= Math.PI * 2;
     if (angles.Mars > Math.PI * 2) angles.Mars -= Math.PI * 2;
     if (angles.Venus > Math.PI * 2) angles.Venus -= Math.PI * 2;
+
+    dayCounter += dt * speed;
+    setCurrentDay(dayCounter);
 
     setBodies((prev) =>
       prev.map((body) => {
@@ -93,51 +52,73 @@ export function SolarSystemCanvas() {
     }
   };
 
-  const handleResize = () => {
-    if (renderer && canvasRef !== undefined) {
-      const rect = canvasRef.parentElement?.getBoundingClientRect();
-      if (rect) {
-        renderer.resize(rect.width, rect.height);
-        renderScene();
-      }
+  const resizeCanvas = () => {
+    if (!containerRef || !canvasRef || !renderer) return;
+
+    const rect = containerRef.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    const width = rect.width;
+    const height = rect.height;
+
+    if (width === 0 || height === 0) return;
+
+    canvasRef.width = Math.round(width * dpr);
+    canvasRef.height = Math.round(height * dpr);
+
+    const ctx = canvasRef.getContext('2d');
+    if (ctx) {
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
+
+    renderer.resize(width, height);
+    renderScene();
   };
 
   onMount(() => {
-    if (!canvasRef) return;
+    if (!canvasRef || !containerRef) return;
 
     const context = canvasRef.getContext('2d');
     if (!context) return;
 
-    const rect = canvasRef.parentElement?.getBoundingClientRect();
-    const width = rect?.width || window.innerWidth;
-    const height = rect?.height || window.innerHeight;
+    const rect = containerRef.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    const width = rect.width || containerRef.clientWidth || 800;
+    const height = rect.height || containerRef.clientHeight || 600;
+
+    canvasRef.width = Math.round(width * dpr);
+    canvasRef.height = Math.round(height * dpr);
+    context.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     renderer = new CanvasRenderer(canvasRef, width, height, context, MAX_ORBIT_AU);
     animationLoop = new AnimationLoop(updateMockOrbit, renderScene);
     animationLoop.start();
 
-    window.addEventListener('resize', handleResize);
-  });
+    const resizeObserver = new ResizeObserver(() => {
+      resizeCanvas();
+    });
+    resizeObserver.observe(containerRef);
 
-  onCleanup(() => {
-    animationLoop?.stop();
-    window.removeEventListener('resize', handleResize);
+    onCleanup(() => {
+      animationLoop?.stop();
+      resizeObserver.disconnect();
+    });
   });
 
   return (
-    <canvas
+    <div
       ref={(el) => {
-        canvasRef = el;
+        containerRef = el;
       }}
-      style={{
-        display: 'block',
-        width: '100%',
-        height: '100%',
-        position: 'fixed',
-        top: 0,
-        left: 0,
-      }}
-    />
+      class="relative h-full min-h-0 w-full overflow-hidden"
+    >
+      <canvas
+        ref={(el) => {
+          canvasRef = el;
+        }}
+        class="block h-full w-full"
+      />
+    </div>
   );
 }
+
+export default SolarSystemCanvas;
