@@ -187,7 +187,20 @@ function incrementDate(epoch: string): string {
     Dec: 11,
   };
 
-  const MONTH_NAMES = Object.keys(MONTHS);
+  const MONTH_NAMES = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
 
   const parts = epoch.split("-");
   const yearStr = parts[0] ?? "";
