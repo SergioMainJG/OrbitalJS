@@ -40,5 +40,13 @@
     "unicorn/no-nested-ternary": "error"
   },
 
-  "ignorePatterns": ["dist", "node_modules", "*.config.*", "*.d.ts", ".gitignore", ".gitattributes"]
+  "ignorePatterns": [
+    "dist",
+    "node_modules",
+    "*.config.*",
+    "*.d.ts",
+    ".gitignore",
+    ".gitattributes",
+    "*.test.ts"
+  ]
 }
