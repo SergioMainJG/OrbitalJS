@@ -186,7 +186,7 @@ export const EnergyPanelComponent: Component<EnergyPanelProps> = (props) => {
     <div class="bg-base-100/90 flex flex-col gap-3 rounded-2xl p-4 shadow-xl backdrop-blur-sm">
       <div class="flex items-center justify-between">
         <h2 class="text-sm font-semibold tracking-wide text-slate-300">Monitor de Energía</h2>
-        <span class={`badge badge-sm ${STATUS_STYLES[status()].badge}`}>
+        <span class={`badge badge-primary h-fit ${STATUS_STYLES[status()].badge}`}>
           {STATUS_STYLES[status()].label}
         </span>
       </div>
