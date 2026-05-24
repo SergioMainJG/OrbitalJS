@@ -1,10 +1,12 @@
-import { onMount, onCleanup } from 'solid-js';
+import { onMount, onCleanup, createEffect } from 'solid-js';
 import { CanvasRenderer } from '@/render/canvas-renderer';
 import { AnimationLoop } from '@/render/animation-loop';
-import { bodies, setBodies, setCurrentDay, simSpeed, MAX_ORBIT_AU } from '@/state';
+import { bodies, setBodies, setCurrentDay, simSpeed, MAX_ORBIT_AU, isRunning } from '@/state';
 
-const angles = { Earth: 0, Mars: 0, Venus: 0 };
-let dayCounter = 0;
+export const canvasState = {
+  angles: { Earth: 0, Mars: 0, Venus: 0 },
+  dayCounter: 0,
+};
 
 function SolarSystemCanvas() {
   let containerRef: HTMLDivElement | undefined;
@@ -19,27 +21,39 @@ function SolarSystemCanvas() {
     const speedMars = (Math.PI * 2) / 8;
     const speedVenus = (Math.PI * 2) / 3.5;
 
-    angles.Earth += speedEarth * dt * speed;
-    angles.Mars += speedMars * dt * speed;
-    angles.Venus += speedVenus * dt * speed;
+    canvasState.angles.Earth += speedEarth * dt * speed;
+    canvasState.angles.Mars += speedMars * dt * speed;
+    canvasState.angles.Venus += speedVenus * dt * speed;
 
-    if (angles.Earth > Math.PI * 2) angles.Earth -= Math.PI * 2;
-    if (angles.Mars > Math.PI * 2) angles.Mars -= Math.PI * 2;
-    if (angles.Venus > Math.PI * 2) angles.Venus -= Math.PI * 2;
+    if (canvasState.angles.Earth > Math.PI * 2) canvasState.angles.Earth -= Math.PI * 2;
+    if (canvasState.angles.Mars > Math.PI * 2) canvasState.angles.Mars -= Math.PI * 2;
+    if (canvasState.angles.Venus > Math.PI * 2) canvasState.angles.Venus -= Math.PI * 2;
 
-    dayCounter += dt * speed;
-    setCurrentDay(dayCounter);
+    canvasState.dayCounter += dt * speed;
+    setCurrentDay(canvasState.dayCounter);
 
     setBodies((prev) =>
       prev.map((body) => {
         if (body.name === 'Earth') {
-          return { ...body, x: Math.cos(angles.Earth) * 1.0, y: Math.sin(angles.Earth) * 1.0 };
+          return {
+            ...body,
+            x: Math.cos(canvasState.angles.Earth) * 1.0,
+            y: Math.sin(canvasState.angles.Earth) * 1.0,
+          };
         }
         if (body.name === 'Mars') {
-          return { ...body, x: Math.cos(angles.Mars) * 1.52, y: Math.sin(angles.Mars) * 1.52 };
+          return {
+            ...body,
+            x: Math.cos(canvasState.angles.Mars) * 1.52,
+            y: Math.sin(canvasState.angles.Mars) * 1.52,
+          };
         }
         if (body.name === 'Venus') {
-          return { ...body, x: Math.cos(angles.Venus) * 0.72, y: Math.sin(angles.Venus) * 0.72 };
+          return {
+            ...body,
+            x: Math.cos(canvasState.angles.Venus) * 0.72,
+            y: Math.sin(canvasState.angles.Venus) * 0.72,
+          };
         }
         return body;
       })
@@ -92,6 +106,21 @@ function SolarSystemCanvas() {
     renderer = new CanvasRenderer(canvasRef, width, height, context, MAX_ORBIT_AU);
     animationLoop = new AnimationLoop(updateMockOrbit, renderScene);
     animationLoop.start();
+
+    createEffect(() => {
+      if (isRunning()) {
+        animationLoop?.start();
+      } else {
+        animationLoop?.stop();
+      }
+    });
+
+    createEffect(() => {
+      const b = bodies();
+      if (!isRunning() && renderer) {
+        renderer.render(b);
+      }
+    });
 
     const resizeObserver = new ResizeObserver(() => {
       resizeCanvas();
