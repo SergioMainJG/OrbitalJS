@@ -22,11 +22,7 @@ import {
   dragToVelocity,
   SPACESHIP_COLLISION_RADIUS_AU,
 } from "@/types/spaceship";
-import {
-  drawVelocityArrow,
-  drawImpactMessage,
-  clearSpaceshipTrail,
-} from "@/render/draw-spaceship";
+import { drawVelocityArrow, drawImpactMessage, clearSpaceshipTrail } from "@/render/draw-spaceship";
 
 // ---------------------------------------------------------------------------
 // Tipos de callbacks
@@ -137,21 +133,12 @@ export class SpaceshipLauncher {
       this.launchState.originCanvas !== null &&
       this.launchState.currentCanvas !== null
     ) {
-      drawVelocityArrow(
-        this.ctx,
-        this.launchState.originCanvas,
-        this.launchState.currentCanvas,
-      );
+      drawVelocityArrow(this.ctx, this.launchState.originCanvas, this.launchState.currentCanvas);
     }
 
     // Fade de impacto
     if (this.impactFade !== null) {
-      drawImpactMessage(
-        this.ctx,
-        this.impactFade.px,
-        this.impactFade.py,
-        this.impactFade.alpha,
-      );
+      drawImpactMessage(this.ctx, this.impactFade.px, this.impactFade.py, this.impactFade.alpha);
       this.impactFade.alpha -= 0.02; // fade en ~50 frames
       if (this.impactFade.alpha <= 0) {
         this.impactFade = null;
@@ -251,10 +238,7 @@ export class SpaceshipLauncher {
   private onMouseUp(e: MouseEvent): void {
     if (e.button !== 0) return;
     if (this.launchState.phase !== "aiming") return;
-    if (
-      this.launchState.originCanvas === null ||
-      this.launchState.currentCanvas === null
-    ) return;
+    if (this.launchState.originCanvas === null || this.launchState.currentCanvas === null) return;
 
     const origin = this.launchState.originCanvas;
     const current = this.launchState.currentCanvas;
