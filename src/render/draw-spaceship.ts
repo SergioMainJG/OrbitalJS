@@ -11,11 +11,7 @@
 
 import type { BodyState, TrailPoint } from "@/types";
 import { addTrailPoint } from "@/render/planet-renderer";
-import {
-  SPACESHIP_NAME,
-  SPACESHIP_TRAIL_LENGTH,
-  VELOCITY_ARROW_SCALE,
-} from "@/types/spaceship";
+import { SPACESHIP_NAME, SPACESHIP_TRAIL_LENGTH, VELOCITY_ARROW_SCALE } from "@/types/spaceship";
 
 // ---------------------------------------------------------------------------
 // Trail interno (misma estrategia que draw-planets.ts)
@@ -207,10 +203,10 @@ function drawShapeTriangle(
   ctx.rotate(angle);
 
   ctx.beginPath();
-  ctx.moveTo(size, 0);                      // punta delantera
-  ctx.lineTo(-size * 0.6, size * 0.5);     // ala izquierda
-  ctx.lineTo(-size * 0.3, 0);              // entalla central
-  ctx.lineTo(-size * 0.6, -size * 0.5);   // ala derecha
+  ctx.moveTo(size, 0); // punta delantera
+  ctx.lineTo(-size * 0.6, size * 0.5); // ala izquierda
+  ctx.lineTo(-size * 0.3, 0); // entalla central
+  ctx.lineTo(-size * 0.6, -size * 0.5); // ala derecha
   ctx.closePath();
 
   ctx.fillStyle = color;
