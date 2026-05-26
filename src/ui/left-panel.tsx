@@ -1,5 +1,6 @@
 import { type Component } from 'solid-js';
 import SimulationControls from './simulation-controls';
+import ComparisonToggle from './comparison-toggle';
 
 const LeftPanel: Component = () => {
   return (
@@ -8,6 +9,9 @@ const LeftPanel: Component = () => {
         Controles
       </span>
       <SimulationControls />
+      <div class="mt-4 border-t border-slate-700 pt-4">
+        <ComparisonToggle />
+      </div>
     </div>
   );
 };
