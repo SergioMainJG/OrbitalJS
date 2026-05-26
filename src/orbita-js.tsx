@@ -7,6 +7,8 @@ import ChartsPanel from '@/ui/charts-panel';
 import LegendPanel from '@/ui/legend-panel';
 import SimulationLog from '@/ui/simulation-log';
 import LeftPanel from '@/ui/left-panel';
+import { SpaceshipLauncher } from '@/render/spaceship-launcher';
+import { drawSpaceship } from '@/render/draw-spaceship';
 
 const OrbitalJS: Component = () => {
   return (
