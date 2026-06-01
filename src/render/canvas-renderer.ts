@@ -1,4 +1,4 @@
-import { type RenderBody } from "@/types";
+import type { RenderBody } from "@/types";
 import { Camera } from "./camera";
 import { drawPlanets } from "./draw-planets";
 
@@ -29,6 +29,10 @@ export class CanvasRenderer {
 
     this.ctx.imageSmoothingEnabled = false;
     this.initStarsBackground();
+  }
+
+  public getCamera(): Camera {
+    return this.camera;
   }
 
   private initStarsBackground(): void {
