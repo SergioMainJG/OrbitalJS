@@ -6,6 +6,10 @@ import { SpaceshipLauncher } from '@/render/spaceship-launcher';
 import { drawSpaceship } from '@/render/draw-spaceship';
 import { SPACESHIP_NAME } from '@/types/spaceship';
 import type { RenderBody } from '@/types';
+import { bodies, setBodies, setCurrentDay, simSpeed, MAX_ORBIT_AU, isRunning } from '@/state';
+import { setTooltip } from '@/state/tooltip-store';
+import { getHoveredPlanet } from '@/render/planet-hit-test';
+import { orbitalEnergy } from '@/physics/orbital-energy';
 
 export const canvasState = {
   angles: { Earth: 0, Mars: 0, Venus: 0 },
