@@ -7,3 +7,4 @@ export * from "./energy-snapshot.interface";
 export * from "./horizons";
 export * from "./render-body.interface";
 export * from "./trail-point.interface";
+export * from "./tooltip-data.interface";

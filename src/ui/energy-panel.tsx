@@ -20,6 +20,8 @@ import {
 } from '@/physics';
 import type { DriftStatus, EnergyPanelProps, EnergySnapshot } from '@/types';
 import { SERIES_COLORS } from '@/constants';
+import { setTooltip } from '@/state/tooltip-store';
+import { ENERGY_PANEL_TOOLTIP } from '@/constants/math-explanations';
 
 Chart.register(
   LineController,
@@ -34,9 +36,9 @@ Chart.register(
 const MAX_HISTORY = 300;
 
 const STATUS_STYLES: Record<DriftStatus, { badge: string; label: string }> = {
-  green: { badge: 'badge-success', label: 'Conservación nominal' },
+  green: { badge: 'badge-success', label: 'Conservacion nominal' },
   yellow: { badge: 'badge-warning', label: 'Deriva moderada' },
-  red: { badge: 'badge-error', label: 'RK4 necesita dt más pequeño' },
+  red: { badge: 'badge-error', label: 'RK4 necesita dt mas pequeño' },
 };
 
 export const EnergyPanelComponent: Component<EnergyPanelProps> = (props) => {
@@ -87,7 +89,7 @@ export const EnergyPanelComponent: Component<EnergyPanelProps> = (props) => {
       labels: [],
       datasets: [
         {
-          label: 'E. cinética',
+          label: 'E. cinetica',
           data: [],
           borderColor: SERIES_COLORS.kinetic,
           backgroundColor: `${SERIES_COLORS.kinetic}22`,
@@ -134,7 +136,7 @@ export const EnergyPanelComponent: Component<EnergyPanelProps> = (props) => {
           titleColor: '#94a3b8',
           bodyColor: '#e2e8f0',
           callbacks: {
-            title: (items) => `Día ${items[0]?.label ?? ''}`,
+            title: (items) => `Dia ${items[0]?.label ?? ''}`,
             label: (item) =>
               ` ${item.dataset.label}: ${(item.parsed.y as number).toExponential(4)}`,
           },
@@ -146,7 +148,7 @@ export const EnergyPanelComponent: Component<EnergyPanelProps> = (props) => {
           grid: { color: '#1e293b' },
           title: {
             display: true,
-            text: 'Tiempo simulado (días)',
+            text: 'Tiempo simulado (dias)',
             color: '#64748b',
             font: { size: 10 },
           },
@@ -158,7 +160,7 @@ export const EnergyPanelComponent: Component<EnergyPanelProps> = (props) => {
             callback: (v) => (v as number).toExponential(2),
           },
           grid: { color: '#1e293b' },
-          title: { display: true, text: 'Energía (u. arb.)', color: '#64748b', font: { size: 10 } },
+          title: { display: true, text: 'Energia (u. arb.)', color: '#64748b', font: { size: 10 } },
         },
       },
     };
@@ -185,10 +187,27 @@ export const EnergyPanelComponent: Component<EnergyPanelProps> = (props) => {
   return (
     <div class="bg-base-100/90 flex flex-col gap-3 rounded-2xl p-4 shadow-xl backdrop-blur-sm">
       <div class="flex items-center justify-between">
-        <h2 class="text-sm font-semibold tracking-wide text-slate-300">Monitor de Energía</h2>
-        <span class={`badge badge-primary h-fit ${STATUS_STYLES[status()].badge}`}>
-          {STATUS_STYLES[status()].label}
-        </span>
+        <h2 class="text-sm font-semibold tracking-wide text-slate-300">Monitor de Energia</h2>
+        <div class="flex items-center gap-2">
+          <button
+            onMouseEnter={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              setTooltip({
+                title: 'Conservacion de Energia',
+                x: rect.right + 10,
+                y: rect.top,
+                content: ENERGY_PANEL_TOOLTIP,
+              });
+            }}
+            onMouseLeave={() => setTooltip(null)}
+            class="flex h-5 w-5 cursor-help items-center justify-center rounded-full border border-slate-600 text-[11px] text-slate-400 transition-colors hover:border-yellow-400 hover:text-yellow-400"
+          >
+            i
+          </button>
+          <span class={`badge badge-primary h-fit ${STATUS_STYLES[status()].badge}`}>
+            {STATUS_STYLES[status()].label}
+          </span>
+        </div>
       </div>
 
       <div
@@ -198,7 +217,7 @@ export const EnergyPanelComponent: Component<EnergyPanelProps> = (props) => {
           'bg-warning/10': status() === 'yellow',
           'bg-error/10': status() === 'red',
         }}
-        aria-label="Deriva energética porcentual"
+        aria-label="Deriva energetica porcentual"
       >
         <span
           class="font-mono text-4xl leading-none font-bold tabular-nums"
@@ -233,7 +252,7 @@ export const EnergyPanelComponent: Component<EnergyPanelProps> = (props) => {
               d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"
             />
           </svg>
-          <span class="text-error font-semibold">RK4 necesita dt más pequeño</span>
+          <span class="text-error font-semibold">RK4 necesita dt mas pequeño</span>
         </div>
       </Show>
 
@@ -242,12 +261,12 @@ export const EnergyPanelComponent: Component<EnergyPanelProps> = (props) => {
           ref={(el) => {
             canvasRef = el;
           }}
-          aria-label="Gráfica de energía cinética, potencial y total"
+          aria-label="Grafica de energia cinetica, potencial y total"
           role="img"
         />
         <Show when={history().length === 0}>
           <div class="absolute inset-0 flex items-center justify-center text-xs text-slate-500">
-            Esperando datos de simulación…
+            Esperando datos de simulacion...
           </div>
         </Show>
       </div>
