@@ -78,7 +78,7 @@ export function drawSpaceship(
   // vx en AU/día → dirección en canvas (Y invertida)
   const angle = Math.atan2(-body.vy, body.vx);
 
-  drawShapeTriangle(ctx, px, py, angle, "#00ffff");
+  drawShipImage(ctx, px, py, angle);
 }
 
 // ---------------------------------------------------------------------------
@@ -133,7 +133,7 @@ export function drawVelocityArrow(
   ctx.fill();
 
   // Preview del triángulo en el origen
-  drawShapeTriangle(ctx, origin.x, origin.y, angle, "rgba(0,255,255,0.5)");
+  drawShipImage(ctx, origin.x, origin.y, angle);
 
   // Etiqueta de velocidad estimada
   const speedLabel = ((length / VELOCITY_ARROW_SCALE) * 10).toFixed(1);
@@ -185,35 +185,42 @@ export function drawImpactMessage(
 // Helper: triángulo orientado
 // ---------------------------------------------------------------------------
 
-/**
- * Dibuja un triángulo apuntando en la dirección `angle`.
- * Tamaño fijo de 10px de largo, consistente con la escala del canvas.
- */
-function drawShapeTriangle(
-  ctx: CanvasRenderingContext2D,
-  px: number,
-  py: number,
-  angle: number,
-  color: string,
-): void {
-  const size = 10;
+// ==================== NUEVO CÓDIGO (reemplaza el triángulo) ====================
+
+// Cargar la imagen una sola vez
+
+let spaceshipImage: HTMLImageElement | null = null;
+
+function loadSpaceshipImage(): void {
+  if (spaceshipImage) return;
+
+  spaceshipImage = new Image();
+  spaceshipImage.src = "/assets/spaceship.png";
+
+  spaceshipImage.onload = () => {};
+  spaceshipImage.onerror = () => console.error("Error cargando spaceship.png");
+}
+
+// Reemplaza la llamada a drawShapeTriangle por esta:
+function drawShipImage(ctx: CanvasRenderingContext2D, px: number, py: number, angle: number): void {
+  if (!spaceshipImage) {
+    loadSpaceshipImage();
+    return;
+  }
 
   ctx.save();
   ctx.translate(px, py);
-  ctx.rotate(angle);
+  ctx.rotate(angle); // ← importante: ajusta según orientación de tu imagen
 
-  ctx.beginPath();
-  ctx.moveTo(size, 0); // punta delantera
-  ctx.lineTo(-size * 0.6, size * 0.5); // ala izquierda
-  ctx.lineTo(-size * 0.3, 0); // entalla central
-  ctx.lineTo(-size * 0.6, -size * 0.5); // ala derecha
-  ctx.closePath();
+  const size = 32; // tamaño del cohete en píxeles (ajusta según tu imagen)
 
-  ctx.fillStyle = color;
-  ctx.shadowColor = color;
-  ctx.shadowBlur = 8;
-  ctx.fill();
-  ctx.shadowBlur = 0;
+  ctx.drawImage(
+    spaceshipImage,
+    -size / 2, // centrar X
+    -size / 2, // centrar Y
+    size,
+    size,
+  );
 
   ctx.restore();
 }
