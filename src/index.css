@@ -59,3 +59,17 @@ body,
 .panel-scroll::-webkit-scrollbar-thumb:hover {
   background: #475569;
 }
+
+@media (max-width: 768px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr auto auto;
+    grid-template-areas:
+      'left-panel'
+      'canvas'
+      'log'
+      'right-panel';
+    height: auto;
+    min-height: 100vh;
+  }
+}
