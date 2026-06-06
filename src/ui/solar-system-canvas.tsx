@@ -1,15 +1,14 @@
 import { onMount, onCleanup, createEffect } from 'solid-js';
 import { CanvasRenderer } from '@/render/canvas-renderer';
 import { AnimationLoop } from '@/render/animation-loop';
-import { bodies, setBodies, setCurrentDay, simSpeed, MAX_ORBIT_AU } from '@/state';
-import { SpaceshipLauncher } from '@/render/spaceship-launcher';
-import { drawSpaceship } from '@/render/draw-spaceship';
-import { SPACESHIP_NAME } from '@/types/spaceship';
-import type { RenderBody } from '@/types';
 import { bodies, setBodies, setCurrentDay, simSpeed, MAX_ORBIT_AU, isRunning } from '@/state';
 import { setTooltip } from '@/state/tooltip-store';
 import { getHoveredPlanet } from '@/render/planet-hit-test';
 import { orbitalEnergy } from '@/physics/orbital-energy';
+import { SpaceshipLauncher } from '@/render/spaceship-launcher';
+import { drawSpaceship } from '@/render/draw-spaceship';
+import { SPACESHIP_NAME } from '@/types/spaceship';
+import type { RenderBody } from '@/types';
 
 export const canvasState = {
   angles: { Earth: 0, Mars: 0, Venus: 0 },
@@ -78,7 +77,6 @@ function SolarSystemCanvas() {
     // Verificar colisiones de la nave en cada tick de física
     if (launcher) {
       const next = launcher.checkCollisions(bodies());
-      // Solo actualizar si la nave fue removida (colisión detectada)
       if (next.length !== bodies().length) {
         setBodies(next as RenderBody[]);
       }
@@ -94,20 +92,15 @@ function SolarSystemCanvas() {
     const cx = canvasWidth / 2;
     const cy = canvasHeight / 2;
 
-    // Escala: misma lógica que CanvasRenderer.camera.autoScale
-    // px por AU → Math.min(w, h) / 2 / maxOrbitAU
     const scale = Math.min(canvasWidth, canvasHeight) / 2 / MAX_ORBIT_AU;
 
-    // Renderizar planetas (excluir nave — tiene su propio draw)
     renderer.render(bodies().filter((b) => b.name !== SPACESHIP_NAME));
 
-    // Renderizar nave si está en vuelo
     const ship = bodies().find((b) => b.name === SPACESHIP_NAME);
     if (ship) {
       drawSpaceship(ctx, ship, scale, cx, cy);
     }
 
-    // Overlay: flecha de aiming o mensaje de impacto
     launcher?.drawOverlay();
   };
 
@@ -134,7 +127,6 @@ function SolarSystemCanvas() {
 
     renderer.resize(width, height);
 
-    // Actualizar transform del launcher al hacer resize
     if (launcher) {
       const scale = Math.min(width, height) / 2 / MAX_ORBIT_AU;
       launcher.updateTransform(scale, width / 2, height / 2);
@@ -207,11 +199,9 @@ function SolarSystemCanvas() {
 
     renderer = new CanvasRenderer(canvasRef, width, height, context, MAX_ORBIT_AU);
 
-    // Inicializar launcher con la escala y centro actuales
     const scale = Math.min(width, height) / 2 / MAX_ORBIT_AU;
     launcher = new SpaceshipLauncher(canvasRef, context, scale, width / 2, height / 2, {
       onLaunch: (spaceship) => {
-        // RenderBody requiere radius y color además de BodyState
         const spaceshipRender = {
           ...spaceship,
           radius: 4,
