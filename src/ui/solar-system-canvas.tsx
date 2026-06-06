@@ -5,6 +5,10 @@ import { bodies, setBodies, setCurrentDay, simSpeed, MAX_ORBIT_AU, isRunning } f
 import { setTooltip } from '@/state/tooltip-store';
 import { getHoveredPlanet } from '@/render/planet-hit-test';
 import { orbitalEnergy } from '@/physics/orbital-energy';
+import { SpaceshipLauncher } from '@/render/spaceship-launcher';
+import { drawSpaceship } from '@/render/draw-spaceship';
+import { SPACESHIP_NAME } from '@/types/spaceship';
+import type { RenderBody } from '@/types';
 
 export const canvasState = {
   angles: { Earth: 0, Mars: 0, Venus: 0 },
@@ -16,6 +20,11 @@ function SolarSystemCanvas() {
   let canvasRef: HTMLCanvasElement | undefined;
   let renderer: CanvasRenderer | null = null;
   let animationLoop: AnimationLoop | null = null;
+  let launcher: SpaceshipLauncher | null = null;
+
+  // Dimensiones actuales del canvas (sin DPR) para calcular cx/cy
+  let canvasWidth = 800;
+  let canvasHeight = 600;
 
   const updateMockOrbit = (dt: number) => {
     const speed = simSpeed();
@@ -64,12 +73,35 @@ function SolarSystemCanvas() {
         return body;
       })
     );
+
+    // Verificar colisiones de la nave en cada tick de física
+    if (launcher) {
+      const next = launcher.checkCollisions(bodies());
+      if (next.length !== bodies().length) {
+        setBodies(next as RenderBody[]);
+      }
+    }
   };
 
   const renderScene = () => {
-    if (renderer) {
-      renderer.render(bodies());
+    if (!renderer || !canvasRef) return;
+
+    const ctx = canvasRef.getContext('2d');
+    if (!ctx) return;
+
+    const cx = canvasWidth / 2;
+    const cy = canvasHeight / 2;
+
+    const scale = Math.min(canvasWidth, canvasHeight) / 2 / MAX_ORBIT_AU;
+
+    renderer.render(bodies().filter((b) => b.name !== SPACESHIP_NAME));
+
+    const ship = bodies().find((b) => b.name === SPACESHIP_NAME);
+    if (ship) {
+      drawSpaceship(ctx, ship, scale, cx, cy);
     }
+
+    launcher?.drawOverlay();
   };
 
   const resizeCanvas = () => {
@@ -82,6 +114,9 @@ function SolarSystemCanvas() {
 
     if (width === 0 || height === 0) return;
 
+    canvasWidth = width;
+    canvasHeight = height;
+
     canvasRef.width = Math.round(width * dpr);
     canvasRef.height = Math.round(height * dpr);
 
@@ -91,6 +126,12 @@ function SolarSystemCanvas() {
     }
 
     renderer.resize(width, height);
+
+    if (launcher) {
+      const scale = Math.min(width, height) / 2 / MAX_ORBIT_AU;
+      launcher.updateTransform(scale, width / 2, height / 2);
+    }
+
     renderScene();
   };
 
@@ -149,11 +190,33 @@ function SolarSystemCanvas() {
     const width = rect.width || containerRef.clientWidth || 800;
     const height = rect.height || containerRef.clientHeight || 600;
 
+    canvasWidth = width;
+    canvasHeight = height;
+
     canvasRef.width = Math.round(width * dpr);
     canvasRef.height = Math.round(height * dpr);
     context.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     renderer = new CanvasRenderer(canvasRef, width, height, context, MAX_ORBIT_AU);
+
+    const scale = Math.min(width, height) / 2 / MAX_ORBIT_AU;
+    launcher = new SpaceshipLauncher(canvasRef, context, scale, width / 2, height / 2, {
+      onLaunch: (spaceship) => {
+        const spaceshipRender = {
+          ...spaceship,
+          radius: 4,
+          color: '#00ffff',
+        };
+        setBodies([...bodies(), spaceshipRender]);
+      },
+      onCancel: () => {
+        setBodies(bodies().filter((b) => b.name !== SPACESHIP_NAME));
+      },
+      onImpact: (bodyName) => {
+        console.info(`[SpaceshipLauncher] Impacto con ${bodyName}`);
+      },
+    });
+
     animationLoop = new AnimationLoop(updateMockOrbit, renderScene);
     animationLoop.start();
 
@@ -179,6 +242,7 @@ function SolarSystemCanvas() {
 
     onCleanup(() => {
       animationLoop?.stop();
+      launcher?.destroy();
       resizeObserver.disconnect();
     });
   });
