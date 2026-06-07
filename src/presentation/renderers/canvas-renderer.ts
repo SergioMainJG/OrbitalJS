@@ -1,8 +1,9 @@
-import type { RenderBody } from "@/shared/types";
+import type { Scene } from "@/shared/types/scene";
+import type { Renderer } from "@/core/contracts/renderer.contract";
 import { Camera } from "./camera";
-import { drawPlanets } from "./draw-planets";
+import { drawBodies } from "./draw-bodies";
 
-export class CanvasRenderer {
+export class CanvasRenderer implements Renderer {
   private ctx: CanvasRenderingContext2D;
   private camera: Camera;
   private starsCanvas: HTMLCanvasElement | null = null;
@@ -28,6 +29,9 @@ export class CanvasRenderer {
     canvas.height = height;
 
     this.ctx.imageSmoothingEnabled = false;
+  }
+
+  initialize(): void {
     this.initStarsBackground();
   }
 
@@ -65,9 +69,13 @@ export class CanvasRenderer {
     }
   }
 
-  render(bodies: RenderBody[]): void {
+  render(scene: Scene): void {
     this.clear();
-    drawPlanets(this.ctx, bodies, this.camera.scale, this.width / 2, this.height / 2);
+    drawBodies(this.ctx, scene.bodies, this.camera.scale, this.width / 2, this.height / 2);
+  }
+
+  destroy(): void {
+    this.starsCanvas = null;
   }
 
   resize(width: number, height: number): void {

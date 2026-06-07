@@ -6,15 +6,15 @@ import {
   setSimSpeed,
   setBodies,
   setCurrentDay,
-  initialBodies,
   integrator,
   setIntegrator,
   dt,
 } from '@/features/simulation/stores/simulation-store';
-import { clearTrails } from '@/presentation/renderers/draw-planets';
+import { clearTrails } from '@/presentation/renderers/draw-bodies';
 import { clearSpaceshipTrail } from '@/presentation/renderers/draw-spaceship';
-import { rk4Step } from '@/core/physics/runge-kutta';
-import { eulerStep } from '@/core/physics/euler-integrator';
+import { PhysicsEngine, type IntegratorName } from '@/core/engines/physics-engine';
+import { loadScenario } from '@/application/use-cases/load-scenario.use-case';
+import { SOLAR_SYSTEM_SCENARIO } from '@/shared/scenarios';
 
 const SPEEDS = [0.1, 0.5, 1, 2, 5, 10];
 
@@ -22,21 +22,20 @@ const SimulationControls: Component = () => {
   // Issue #10 fix: handleReset with no canvasState references
   const handleReset = () => {
     setIsRunning(false);
-    setBodies([...initialBodies]);
-    setCurrentDay(0);
-    setSimSpeed(1);
-    clearTrails();
+    loadScenario(SOLAR_SYSTEM_SCENARIO);
     clearSpaceshipTrail();
     setTimeout(() => setIsRunning(true), 50);
   };
 
+  const physicsEngine = new PhysicsEngine();
+
   // Issue #10 fix: handleStep triggers a single physics step and re-render
   const handleStep = () => {
     setIsRunning(false);
-    const stepFn = integrator() === 'RK4' ? rk4Step : eulerStep;
+    physicsEngine.setIntegrator(integrator() as IntegratorName);
     const simDt = dt() * simSpeed();
     setBodies((prev) => {
-      const next = stepFn(prev, simDt);
+      const next = physicsEngine.step(prev, simDt);
       return next.map((b, i) => ({
         ...prev[i]!,
         ...b,

@@ -10,7 +10,7 @@
  */
 
 import type { BodyState, TrailPoint } from "@/shared/types";
-import { addTrailPoint } from "./planet-renderer";
+import { addTrailPoint } from "./body-renderer";
 import {
   SPACESHIP_NAME,
   SPACESHIP_TRAIL_LENGTH,

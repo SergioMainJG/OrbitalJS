@@ -1,71 +1,19 @@
 import { createSignal } from "solid-js";
-import { getPlanetColor, getPlanetRadius } from "@/presentation/renderers/planet-renderer";
 import type { RenderBody } from "@/shared/types";
-import { UNIVERSAL_CONSTS } from "@/shared/constants";
-
-const { G } = UNIVERSAL_CONSTS;
+import { SOLAR_SYSTEM_SCENARIO } from "@/shared/scenarios/solar-system.scenario";
 
 const MAX_ORBIT_AU = 1.52;
 
-const initialBodies: RenderBody[] = [
-  {
-    name: "Sun",
-    x: 0,
-    y: 0,
-    radius: getPlanetRadius(1),
-    color: getPlanetColor("Sun"),
-    mass: 1,
-    vx: 0,
-    vy: 0,
-  },
-  {
-    name: "Earth",
-    x: 1.0,
-    y: 0,
-    radius: getPlanetRadius(3e-6),
-    color: getPlanetColor("Earth"),
-    mass: 3e-6,
-    vx: 0,
-    vy: Math.sqrt(G / 1.0),
-  },
-  {
-    name: "Mars",
-    x: 1.52,
-    y: 0,
-    radius: getPlanetRadius(3.2e-7),
-    color: getPlanetColor("Mars"),
-    mass: 3.2e-7,
-    vx: 0,
-    vy: Math.sqrt(G / 1.52),
-  },
-  {
-    name: "Venus",
-    x: 0.72,
-    y: 0,
-    radius: getPlanetRadius(2.4e-6),
-    color: getPlanetColor("Venus"),
-    mass: 2.4e-6,
-    vx: 0,
-    vy: Math.sqrt(G / 0.72),
-  },
-  {
-    name: "Mercury",
-    x: 0.387,
-    y: 0,
-    radius: getPlanetRadius(1.65e-7),
-    color: getPlanetColor("Mercury"),
-    mass: 1.65e-7,
-    vx: 0,
-    vy: Math.sqrt(G / 0.387),
-  },
-];
+// Scenario bodies without rendering properties — these are injected by loadScenario use-case
+const rawScenarioBodies = SOLAR_SYSTEM_SCENARIO.bodies;
 
 export const EARTH_INITIAL_POS = {
-  x: initialBodies.find((b) => b.name === "Earth")?.x ?? 1.0,
-  y: initialBodies.find((b) => b.name === "Earth")?.y ?? 0.0,
+  x: rawScenarioBodies.find((b) => b.name === "Earth")?.x ?? 1.0,
+  y: rawScenarioBodies.find((b) => b.name === "Earth")?.y ?? 0.0,
 };
 
-const [bodies, setBodies] = createSignal<RenderBody[]>(initialBodies);
+// Initial bodies start as the raw scenario bodies; loadScenario() applies rendering properties
+const [bodies, setBodies] = createSignal<RenderBody[]>([]);
 const [currentDay, setCurrentDay] = createSignal(0);
 const [simSpeed, setSimSpeed] = createSignal(1);
 const [showOrbit, setShowOrbit] = createSignal(true);
@@ -101,6 +49,6 @@ export {
   setSimulatedTime,
   logMessages,
   setLogMessages,
-  initialBodies,
+  rawScenarioBodies,
   MAX_ORBIT_AU,
 };

@@ -62,7 +62,6 @@ function buildQueryParams(params: HorizonsRequestParams): URLSearchParams {
     VEC_DELTA_T: "NO",
     ELM_LABELS: "YES",
     TP_TYPE: "ABSOLUTE",
-    QUANTITIES: "1,9,20,23,24",
     R_T_S_ONLY: "NO",
   });
 }
@@ -135,22 +134,19 @@ export async function fetchAllPlanets(epoch: string): Promise<Map<PlanetKey, Hor
 
   console.info(`[jpl-horizons-fetcher] Fetching ${entries.length} planets para época: ${epoch}`);
 
-  const results = await Promise.allSettled(
-    entries.map(async ([key, naifId]) => {
-      const raw = await fetchHorizonsVector(naifId, epoch);
-      return [key, raw] as [PlanetKey, HorizonsRawResponse];
-    }),
-  );
-
   const map = new Map<PlanetKey, HorizonsRawResponse>();
 
-  for (const result of results) {
-    if (result.status === "fulfilled") {
-      const [key, raw] = result.value;
+  for (const [key, naifId] of entries) {
+    try {
+      const raw = await fetchHorizonsVector(naifId, epoch);
       map.set(key, raw);
-      console.info(`[jpl-horizons-fetcher] ✓ ${key} (NAIF ${PLANET_NAIF_IDS[key]})`);
-    } else {
-      console.error(`[jpl-horizons-fetcher] ✗ ${result.reason}`);
+      console.info(`[jpl-horizons-fetcher] ✓ ${key} (NAIF ${naifId})`);
+      // Evitar saturar la API de JPL (rate limit/concurrencia)
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    } catch (error) {
+      console.error(
+        `[jpl-horizons-fetcher] ✗ ${String(error instanceof Error ? error.message : error)}`,
+      );
     }
   }
 

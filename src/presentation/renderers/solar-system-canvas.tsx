@@ -1,10 +1,12 @@
 import { onMount, onCleanup, createEffect } from 'solid-js';
 import { CanvasRenderer } from './canvas-renderer';
 import { AnimationLoop } from '@/core/engines/animation-loop';
+import { PhysicsEngine, type IntegratorName } from '@/core/engines/physics-engine';
 import {
   bodies,
   setBodies,
   setCurrentDay,
+  currentDay,
   simSpeed,
   MAX_ORBIT_AU,
   isRunning,
@@ -12,14 +14,12 @@ import {
   integrator,
 } from '@/features/simulation/stores/simulation-store';
 import { setTooltip } from '@/presentation/shared-components/tooltip-store';
-import { getHoveredPlanet } from './planet-hit-test';
+import { getHoveredBody } from './body-hit-test';
 import { orbitalEnergy } from '@/core/physics/orbital-energy';
 import { SpaceshipLauncher } from './spaceship-launcher';
 import { drawSpaceship } from './draw-spaceship';
 import { SPACESHIP_NAME } from '@/shared/types/spaceship';
-import { rk4Step } from '@/core/physics/runge-kutta';
-import { eulerStep } from '@/core/physics/euler-integrator';
-import { tickComparison } from '@/features/comparison/stores/comparison-store';
+import { tickComparison, isComparing } from '@/features/comparison/stores/comparison-store';
 import type { RenderBody } from '@/shared/types';
 
 function SolarSystemCanvas() {
@@ -33,22 +33,26 @@ function SolarSystemCanvas() {
   let canvasWidth = 800;
   let canvasHeight = 600;
 
-  // BUG-2 fix: real physics update replacing updateMockOrbit
+  const physicsEngine = new PhysicsEngine();
+
+  // BUG-2 fix: real physics update using PhysicsEngine
   const updatePhysics = (_wallDt: number) => {
     if (!isRunning()) return;
 
     const simDt = dt() * simSpeed(); // simulation days per animation frame
-    const stepFn = integrator() === 'RK4' ? rk4Step : eulerStep;
+    physicsEngine.setIntegrator(integrator() as IntegratorName);
 
     setBodies((prev) => {
-      const next = stepFn(prev, simDt);
+      const next = physicsEngine.step(prev, simDt);
       return next.map((b, i) => ({ ...prev[i]!, ...b }));
     });
 
     setCurrentDay((d) => d + simDt);
 
-    // Tick the comparison store with the same dt
-    tickComparison(simDt);
+    // Tick comparison if active (through the store function which delegates to engine)
+    if (isComparing()) {
+      tickComparison(simDt);
+    }
 
     // Collision detection for spaceship
     if (launcher) {
@@ -70,7 +74,14 @@ function SolarSystemCanvas() {
 
     const scale = Math.min(canvasWidth, canvasHeight) / 2 / MAX_ORBIT_AU;
 
-    renderer.render(bodies().filter((b) => b.name !== SPACESHIP_NAME));
+    // Construct scene for rendering
+    const scene = {
+      bodies: bodies().filter((b) => b.name !== SPACESHIP_NAME),
+      overlays: [],
+      annotations: [],
+      metadata: { name: 'solar-system', timeStep: dt(), elapsed: currentDay() },
+    };
+    renderer.render(scene);
 
     const ship = bodies().find((b) => b.name === SPACESHIP_NAME);
     if (ship) {
@@ -123,7 +134,7 @@ function SolarSystemCanvas() {
     const centerX = rect.width / 2;
     const centerY = rect.height / 2;
 
-    const hoveredPlanet = getHoveredPlanet(mouseX, mouseY, bodies(), scale, centerX, centerY);
+    const hoveredPlanet = getHoveredBody(mouseX, mouseY, bodies(), scale, centerX, centerY);
 
     if (hoveredPlanet) {
       const energy = orbitalEnergy(hoveredPlanet);
@@ -174,6 +185,7 @@ function SolarSystemCanvas() {
     context.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     renderer = new CanvasRenderer(canvasRef, width, height, context, MAX_ORBIT_AU);
+    renderer.initialize();
 
     const scale = Math.min(width, height) / 2 / MAX_ORBIT_AU;
     launcher = new SpaceshipLauncher(canvasRef, context, scale, width / 2, height / 2, {
@@ -210,7 +222,14 @@ function SolarSystemCanvas() {
     createEffect(() => {
       const b = bodies();
       if (!isRunning() && renderer) {
-        renderer.render(b);
+        // Construct minimal scene for rendering
+        const scene = {
+          bodies: b.filter((body) => body.name !== SPACESHIP_NAME),
+          overlays: [],
+          annotations: [],
+          metadata: { name: 'solar-system', timeStep: dt(), elapsed: currentDay() },
+        };
+        renderer.render(scene);
       }
     });
 

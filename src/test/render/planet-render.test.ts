@@ -1,74 +1,70 @@
 /* eslint-disable */
 /* prettier-ignore */
 import { describe, expect, it } from 'vitest';
-import {
-  addTrailPoint,
-  getPlanetColor,
-  getPlanetRadius,
-} from "@/presentation/renderers/planet-renderer";
+import { addTrailPoint, getBodyColor, getBodyRadius } from "@/presentation/renderers/body-renderer";
 import type { TrailPoint } from "@/shared/types";
 
-describe("getPlanetColor", () => {
+describe("getBodyColor", () => {
   it("returns orange for the Sun", () => {
-    expect(getPlanetColor("Sun")).toBe("#f97316");
+    expect(getBodyColor("Sun")).toBe("#f97316");
   });
 
   it("returns gray for Mercury", () => {
-    expect(getPlanetColor("Mercury")).toBe("#9ca3af");
+    expect(getBodyColor("Mercury")).toBe("#9ca3af");
   });
 
   it("returns yellow for Venus", () => {
-    expect(getPlanetColor("Venus")).toBe("#facc15");
+    expect(getBodyColor("Venus")).toBe("#facc15");
   });
 
   it("returns blue for Earth", () => {
-    expect(getPlanetColor("Earth")).toBe("#3b82f6");
+    expect(getBodyColor("Earth")).toBe("#3b82f6");
   });
 
   it("returns red for Mars", () => {
-    expect(getPlanetColor("Mars")).toBe("#ef4444");
+    expect(getBodyColor("Mars")).toBe("#ef4444");
   });
 
   it("returns a non-empty string for an unknown body name", () => {
-    const color = getPlanetColor("Unknown");
+    const color = getBodyColor("Unknown");
     expect(typeof color).toBe("string");
     expect(color.length).toBeGreaterThan(0);
   });
 
   it("all five known bodies have unique colors", () => {
-    const colors = ["Sun", "Mercury", "Venus", "Earth", "Mars"].map(getPlanetColor);
+    const colors = ["Sun", "Mercury", "Venus", "Earth", "Mars"].map(getBodyColor);
     expect(new Set(colors).size).toBe(5);
   });
 
-  it("returns a consistent color on repeated calls for the same planet", () => {
-    expect(getPlanetColor("Earth")).toBe(getPlanetColor("Earth"));
+  it("returns a consistent color on repeated calls for the same body", () => {
+    expect(getBodyColor("Earth")).toBe(getBodyColor("Earth"));
   });
 });
 
-describe("getPlanetRadius", () => {
+describe("getBodyRadius", () => {
   it("returns a positive radius for any positive mass", () => {
-    expect(getPlanetRadius(3e-6)).toBeGreaterThan(0);
-    expect(getPlanetRadius(1)).toBeGreaterThan(0);
-    expect(getPlanetRadius(1e-8)).toBeGreaterThan(0);
+    expect(getBodyRadius(3e-6)).toBeGreaterThan(0);
+    expect(getBodyRadius(1)).toBeGreaterThan(0);
+    expect(getBodyRadius(1e-8)).toBeGreaterThan(0);
   });
 
   it("the sun has a larger radius than the earth", () => {
-    expect(getPlanetRadius(1)).toBeGreaterThan(getPlanetRadius(3e-6));
+    expect(getBodyRadius(1)).toBeGreaterThan(getBodyRadius(3e-6));
   });
 
   it("radius grows monotonically with mass", () => {
-    expect(getPlanetRadius(1)).toBeGreaterThan(getPlanetRadius(0.01));
-    expect(getPlanetRadius(0.01)).toBeGreaterThan(getPlanetRadius(1e-6));
+    expect(getBodyRadius(1)).toBeGreaterThan(getBodyRadius(0.01));
+    expect(getBodyRadius(0.01)).toBeGreaterThan(getBodyRadius(1e-6));
   });
 
   it("radius grows sub-linearly (logarithmic scale, not linear)", () => {
-    const r1 = getPlanetRadius(1);
-    const r100 = getPlanetRadius(100);
+    const r1 = getBodyRadius(1);
+    const r100 = getBodyRadius(100);
     expect(r100 / r1).toBeLessThan(100);
   });
 
   it("returns the same radius on repeated calls for the same mass", () => {
-    expect(getPlanetRadius(3e-6)).toBe(getPlanetRadius(3e-6));
+    expect(getBodyRadius(3e-6)).toBe(getBodyRadius(3e-6));
   });
 });
 

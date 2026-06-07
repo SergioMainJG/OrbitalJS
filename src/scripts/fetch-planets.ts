@@ -31,7 +31,7 @@ const dir = dirname(fileURLToPath(import.meta.url));
 
 /** Época por defecto: J2000.0 (referencia estándar de astrometría) */
 const DEFAULT_EPOCH = "2000-Jan-01";
-const OUTPUT_PATH = join(dir, "..", "src", "data", "planets.json");
+const OUTPUT_PATH = join(dir, "..", "data", "planets.json");
 
 // ---------------------------------------------------------------------------
 // Entry point
@@ -84,7 +84,7 @@ async function main(): Promise<void> {
   };
 
   // 4. Escribir a disco
-  await mkdir(join(dir, "..", "src", "data"), { recursive: true });
+  await mkdir(join(dir, "..", "data"), { recursive: true });
   await writeFile(OUTPUT_PATH, JSON.stringify(output, null, 2), "utf-8");
 
   const totalPlanets = Object.keys(PLANET_NAIF_IDS).length;

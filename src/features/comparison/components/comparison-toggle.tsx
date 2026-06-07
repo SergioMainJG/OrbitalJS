@@ -1,9 +1,9 @@
 import { type Component } from 'solid-js';
+import { isComparing } from '@/features/comparison/stores/comparison-store';
 import {
-  isComparing,
-  setIsComparing,
-  resetComparison,
-} from '@/features/comparison/stores/comparison-store';
+  startComparison,
+  stopComparison,
+} from '@/application/use-cases/compare-integrators.use-case';
 import { setTooltip } from '@/presentation/shared-components/tooltip-store';
 import {
   COMPARISON_TOOLTIP_EULER,
@@ -13,8 +13,11 @@ import {
 const ComparisonToggle: Component = () => {
   const handleChange = (e: Event) => {
     const checked = (e.currentTarget as HTMLInputElement).checked;
-    if (!checked) resetComparison();
-    setIsComparing(checked);
+    if (checked) {
+      startComparison();
+    } else {
+      stopComparison();
+    }
   };
 
   return (
