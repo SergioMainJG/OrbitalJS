@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { type BodyState } from "@/types";
-import { rk4Step } from "@/physics/runge-kutta";
-import { eulerStep } from "@/physics/euler-integrator";
+import { type BodyState } from "@/shared/types";
+import { rk4Step } from "@/core/physics/runge-kutta";
+import { eulerStep } from "@/core/physics/euler-integrator";
 
 const G = (4 * Math.PI * Math.PI) / (365.25 * 365.25);
 

@@ -14,9 +14,9 @@ import {
   fetchHorizonsVector,
   fetchAllPlanets,
   PLANET_NAIF_IDS,
-} from "@/utils/jpl-horizons-fetcher";
-import { parseHorizonsResponse } from "@/utils/jpl-horizons-parser";
-import type { HorizonsRawResponse } from "@/types/horizons";
+} from "@/shared/utils/jpl-horizons-fetcher";
+import { parseHorizonsResponse } from "@/shared/utils/jpl-horizons-parser";
+import type { HorizonsRawResponse } from "@/shared/types/horizons";
 
 // ---------------------------------------------------------------------------
 // Fixtures — formato real de JPL Horizons (modo VECTORS, AU-D)

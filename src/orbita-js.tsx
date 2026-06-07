@@ -1,13 +1,13 @@
 import { type Component } from 'solid-js';
-import SolarSystemCanvas from '@/ui/solar-system-canvas';
-import ComparisonOverlay from '@/ui/comparison-overlay';
-import CanvasOverlay from '@/ui/canvas-overlay';
-import ValidationPanel from '@/ui/validation-panel';
-import ChartsPanel from '@/ui/charts-panel';
-import LegendPanel from '@/ui/legend-panel';
-import SimulationLog from '@/ui/simulation-log';
-import LeftPanel from '@/ui/left-panel';
-import Tooltip from '@/ui/tooltip';
+import SolarSystemCanvas from '@/presentation/renderers/solar-system-canvas';
+import ComparisonOverlay from '@/features/comparison/components/comparison-overlay';
+import CanvasOverlay from '@/features/simulation/components/canvas-overlay';
+import ValidationPanel from '@/features/simulation/components/validation-panel';
+import ChartsPanel from '@/features/simulation/components/charts-panel';
+import LegendPanel from '@/presentation/shared-components/legend-panel';
+import SimulationLog from '@/presentation/shared-components/simulation-log';
+import LeftPanel from '@/presentation/layouts/left-panel';
+import Tooltip from '@/presentation/shared-components/tooltip';
 
 const OrbitalJS: Component = () => {
   return (

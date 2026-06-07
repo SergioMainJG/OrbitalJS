@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { drawPlanets, clearTrails, CanvasRenderer } from "@/render/";
-import type { BodyState } from "@/types";
+import { drawPlanets, clearTrails } from "@/presentation/renderers/draw-planets";
+import { CanvasRenderer } from "@/presentation/renderers/canvas-renderer";
+import type { BodyState } from "@/shared/types";
 
 function createTrackedCtx() {
   const fillStyleLog: string[] = [];

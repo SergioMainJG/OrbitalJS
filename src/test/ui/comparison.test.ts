@@ -1,12 +1,12 @@
 // /* eslint-disable */
 // /* prettier-ignore */
 import { describe, expect, it } from "vitest";
-import { eulerStep } from "@/physics/euler-integrator";
-import { rk4Step } from "@/physics/runge-kutta";
-import { COLORS } from "@/constants/colors.config";
-import { STYLES } from "@/constants/styles.config";
-import { UNIVERSAL_CONSTS } from "@/constants/constants.config";
-import type { BodyState, TrailPoint } from "@/types";
+import { eulerStep } from "@/core/physics/euler-integrator";
+import { rk4Step } from "@/core/physics/runge-kutta";
+import { COLORS } from "@/shared/constants/colors.config";
+import { STYLES } from "@/shared/constants/styles.config";
+import { UNIVERSAL_CONSTS } from "@/shared/constants/constants.config";
+import type { BodyState, TrailPoint } from "@/shared/types";
 
 const { EULER_TRAIL_LENGTH } = UNIVERSAL_CONSTS;
 

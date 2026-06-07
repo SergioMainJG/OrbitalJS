@@ -18,10 +18,10 @@ import { writeFile, mkdir } from "node:fs/promises";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { fetchAllPlanets, PLANET_NAIF_IDS } from "@/utils/jpl-horizons-fetcher.js";
-import { parseHorizonsResponse } from "@/utils/jpl-horizons-parser.js";
-import type { PlanetKey } from "@/utils/jpl-horizons-fetcher.js";
-import type { PlanetInitialConditions, PlanetsData } from "@/types/horizons";
+import { fetchAllPlanets, PLANET_NAIF_IDS } from "@/shared/utils/jpl-horizons-fetcher";
+import { parseHorizonsResponse } from "@/shared/utils/jpl-horizons-parser";
+import type { PlanetKey } from "@/shared/utils/jpl-horizons-fetcher";
+import type { PlanetInitialConditions, PlanetsData } from "@/shared/types/horizons";
 
 // ---------------------------------------------------------------------------
 // Configuración

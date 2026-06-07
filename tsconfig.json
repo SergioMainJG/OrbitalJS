@@ -19,17 +19,15 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "paths": {
+"paths": {
       "@/*": ["./src/*"],
-      "@/physics/*": ["./src/physics/*"],
-      "@/render/*": ["./src/render/*"],
-      "@/ui/*": ["./src/ui/*"],
-      "@/state/*": ["./src/state/*"],
-      "@/types/*": ["./src/types/*"],
-      "@/constants/*": ["./src/constants/*"],
-      "@/utils/*": ["./src/utils/*"]
+      "@/core/*": ["./src/core/*"],
+      "@/application/*": ["./src/application/*"],
+      "@/features/*": ["./src/features/*"],
+      "@/presentation/*": ["./src/presentation/*"],
+      "@/shared/*": ["./src/shared/*"]
     }
   },
   "include": ["src", "vite.config.ts"],
-  "exclude": ["node_modules", "dist", "**/*/*.test.ts"]
+  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.test.tsx"]
 }
