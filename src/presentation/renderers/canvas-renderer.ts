@@ -1,7 +1,7 @@
 import type { Scene } from "@/shared/types/scene";
 import type { Renderer } from "@/core/contracts/renderer.contract";
 import { Camera } from "./camera";
-import { drawBodies } from "./draw-bodies";
+import { DrawBodiesService } from "./draw-bodies";
 
 export class CanvasRenderer implements Renderer {
   private ctx: CanvasRenderingContext2D;
@@ -10,6 +10,7 @@ export class CanvasRenderer implements Renderer {
   private width: number;
   private height: number;
   private maxOrbitAU: number;
+  private readonly drawBodiesService = new DrawBodiesService();
 
   constructor(
     canvas: HTMLCanvasElement,
@@ -69,13 +70,24 @@ export class CanvasRenderer implements Renderer {
     }
   }
 
+  clearTrails(): void {
+    this.drawBodiesService.clearTrails();
+  }
+
   render(scene: Scene): void {
     this.clear();
-    drawBodies(this.ctx, scene.bodies, this.camera.scale, this.width / 2, this.height / 2);
+    this.drawBodiesService.draw(
+      this.ctx,
+      scene.bodies,
+      this.camera.scale,
+      this.width / 2,
+      this.height / 2,
+    );
   }
 
   destroy(): void {
     this.starsCanvas = null;
+    this.drawBodiesService.clearTrails();
   }
 
   resize(width: number, height: number): void {

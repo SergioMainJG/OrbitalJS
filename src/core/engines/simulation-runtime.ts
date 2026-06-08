@@ -12,3 +12,9 @@ export class SimulationRuntime {
     return this.physicsEngine.step(state, dt);
   }
 }
+
+/**
+ * Instancia singleton compartida por solar-system-canvas y simulation-controls.
+ * Garantiza que ambos usen el mismo motor y el mismo integrador activo.
+ */
+export const simulationRuntime = new SimulationRuntime();

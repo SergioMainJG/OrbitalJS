@@ -10,7 +10,6 @@ import {
   setIntegrator,
   dt,
 } from '@/features/simulation/stores/simulation-store';
-import { clearTrails } from '@/presentation/renderers/draw-bodies';
 import { clearSpaceshipTrail } from '@/presentation/renderers/draw-spaceship';
 import { PhysicsEngine, type IntegratorName } from '@/core/engines/physics-engine';
 import { loadScenario } from '@/application/use-cases/load-scenario.use-case';
@@ -18,8 +17,10 @@ import { SOLAR_SYSTEM_SCENARIO } from '@/shared/scenarios';
 
 const SPEEDS = [0.1, 0.5, 1, 2, 5, 10];
 
+// Singleton: una sola instancia para toda la vida del componente
+const physicsEngine = new PhysicsEngine();
+
 const SimulationControls: Component = () => {
-  // Issue #10 fix: handleReset with no canvasState references
   const handleReset = () => {
     setIsRunning(false);
     loadScenario(SOLAR_SYSTEM_SCENARIO);
@@ -27,9 +28,6 @@ const SimulationControls: Component = () => {
     setTimeout(() => setIsRunning(true), 50);
   };
 
-  const physicsEngine = new PhysicsEngine();
-
-  // Issue #10 fix: handleStep triggers a single physics step and re-render
   const handleStep = () => {
     setIsRunning(false);
     physicsEngine.setIntegrator(integrator() as IntegratorName);
@@ -50,7 +48,6 @@ const SimulationControls: Component = () => {
       <div class="flex gap-2">
         <button
           onClick={() => {
-            if (!isRunning()) clearTrails();
             setIsRunning(!isRunning());
           }}
           class="flex flex-1 items-center justify-center gap-2 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white hover:bg-slate-700"

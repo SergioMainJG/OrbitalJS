@@ -21,6 +21,16 @@ import { drawSpaceship } from './draw-spaceship';
 import { SPACESHIP_NAME } from '@/shared/types/spaceship';
 import { tickComparison, isComparing } from '@/features/comparison/stores/comparison-store';
 import type { RenderBody } from '@/shared/types';
+import type { Scene } from '@/shared/types/scene';
+
+function buildScene(allBodies: RenderBody[], timeStep: number, elapsed: number): Scene {
+  return {
+    bodies: allBodies.filter((b) => b.name !== SPACESHIP_NAME),
+    overlays: [],
+    annotations: [],
+    metadata: { name: 'solar-system', timeStep, elapsed },
+  };
+}
 
 function SolarSystemCanvas() {
   let containerRef: HTMLDivElement | undefined;
@@ -35,11 +45,10 @@ function SolarSystemCanvas() {
 
   const physicsEngine = new PhysicsEngine();
 
-  // BUG-2 fix: real physics update using PhysicsEngine
   const updatePhysics = (_wallDt: number) => {
     if (!isRunning()) return;
 
-    const simDt = dt() * simSpeed(); // simulation days per animation frame
+    const simDt = dt() * simSpeed();
     physicsEngine.setIntegrator(integrator() as IntegratorName);
 
     setBodies((prev) => {
@@ -49,12 +58,10 @@ function SolarSystemCanvas() {
 
     setCurrentDay((d) => d + simDt);
 
-    // Tick comparison if active (through the store function which delegates to engine)
     if (isComparing()) {
       tickComparison(simDt);
     }
 
-    // Collision detection for spaceship
     if (launcher) {
       const next = launcher.checkCollisions(bodies());
       if (next.length !== bodies().length) {
@@ -71,17 +78,9 @@ function SolarSystemCanvas() {
 
     const cx = canvasWidth / 2;
     const cy = canvasHeight / 2;
-
     const scale = Math.min(canvasWidth, canvasHeight) / 2 / MAX_ORBIT_AU;
 
-    // Construct scene for rendering
-    const scene = {
-      bodies: bodies().filter((b) => b.name !== SPACESHIP_NAME),
-      overlays: [],
-      annotations: [],
-      metadata: { name: 'solar-system', timeStep: dt(), elapsed: currentDay() },
-    };
-    renderer.render(scene);
+    renderer.render(buildScene(bodies(), dt(), currentDay()));
 
     const ship = bodies().find((b) => b.name === SPACESHIP_NAME);
     if (ship) {
@@ -190,7 +189,6 @@ function SolarSystemCanvas() {
     const scale = Math.min(width, height) / 2 / MAX_ORBIT_AU;
     launcher = new SpaceshipLauncher(canvasRef, context, scale, width / 2, height / 2, {
       onLaunch: (spaceship) => {
-        // Issue #9: spaceship mass in M☉ (negligible but non-zero for integrator)
         const spaceshipRender: RenderBody = {
           ...spaceship,
           mass: 1e-25,
@@ -207,7 +205,6 @@ function SolarSystemCanvas() {
       },
     });
 
-    // BUG-2 fix: use real physics loop
     animationLoop = new AnimationLoop(updatePhysics, renderScene);
     animationLoop.start();
 
@@ -222,14 +219,7 @@ function SolarSystemCanvas() {
     createEffect(() => {
       const b = bodies();
       if (!isRunning() && renderer) {
-        // Construct minimal scene for rendering
-        const scene = {
-          bodies: b.filter((body) => body.name !== SPACESHIP_NAME),
-          overlays: [],
-          annotations: [],
-          metadata: { name: 'solar-system', timeStep: dt(), elapsed: currentDay() },
-        };
-        renderer.render(scene);
+        renderer.render(buildScene(b, dt(), currentDay()));
       }
     });
 
