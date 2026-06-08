@@ -7,5 +7,6 @@ export interface RenderBody extends BodyState {
   hohmannTargetR?: number;
   hohmannDv2Val?: number;
   hohmannDirection?: "out" | "in";
+  hohmannPrevRadialVel?: number;
   launchedFrom?: string | undefined;
 }

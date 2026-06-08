@@ -159,13 +159,16 @@ function SolarSystemCanvas() {
 
         if (nextBody.name === SPACESHIP_NAME && nextBody.hohmannDv2Applied === false) {
           const r = Math.sqrt(nextBody.x * nextBody.x + nextBody.y * nextBody.y);
-          const targetR = nextBody.hohmannTargetR as number;
           const direction = nextBody.hohmannDirection as 'out' | 'in';
 
+          const radialVel = (nextBody.x * nextBody.vx + nextBody.y * nextBody.vy) / r;
+          const prevRadialVel = nextBody.hohmannPrevRadialVel ?? radialVel;
+          nextBody.hohmannPrevRadialVel = radialVel;
+
           let triggered = false;
-          if (direction === 'out' && r >= targetR) {
+          if (direction === 'out' && prevRadialVel > 0 && radialVel <= 0) {
             triggered = true;
-          } else if (direction === 'in' && r <= targetR) {
+          } else if (direction === 'in' && prevRadialVel < 0 && radialVel >= 0) {
             triggered = true;
           }
 
