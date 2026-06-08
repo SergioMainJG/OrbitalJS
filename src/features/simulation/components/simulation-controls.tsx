@@ -17,6 +17,7 @@ import {
   setFollowSpaceship,
   showLagrange,
   setShowLagrange,
+  addLogMessage,
 } from '@/features/simulation/stores/simulation-store';
 import { simulationRuntime } from '@/core/engines/simulation-runtime';
 import type { IntegratorName } from '@/core/engines/physics-engine';
@@ -100,8 +101,14 @@ const SimulationControls: Component = () => {
     try {
       const scenario = await catalog.getScenarioFromHorizons(epoch);
       loadScenario(scenario);
+      addLogMessage(
+        `[INFO] Época cargada: ${scenario.name} (${scenario.bodies.length - 1} planetas obtenidos desde la NASA).`
+      );
     } catch (err) {
       console.error(err);
+      addLogMessage(
+        `[WARNING] Falló la descarga de NASA JPL para época ${epoch}. Cargando datos de fallback local.`
+      );
       alert('Error al obtener datos reales de JPL Horizons. Usando fallback offline.');
       loadScenario(SOLAR_SYSTEM_SCENARIO);
     } finally {
@@ -242,7 +249,10 @@ const SimulationControls: Component = () => {
         <div class="flex gap-1">
           {(['Euler', 'RK4'] as const).map((name) => (
             <button
-              onClick={() => setIntegrator(name)}
+              onClick={() => {
+                setIntegrator(name);
+                addLogMessage(`[INFO] Integrador cambiado a: ${name}`);
+              }}
               disabled={isLoading()}
               class={`flex-1 rounded px-2 py-1 text-xs disabled:opacity-50 ${
                 integrator() === name

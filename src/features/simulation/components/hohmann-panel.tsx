@@ -1,4 +1,4 @@
-import { type Component, createMemo, createSignal, Show } from 'solid-js';
+import { type Component, createEffect, createMemo, createSignal, For, Show } from 'solid-js';
 import {
   bodies,
   setBodies,
@@ -18,11 +18,69 @@ const KM_S_PER_AU_DAY = 1731.48;
 export const HohmannPanel: Component = () => {
   const [isOpen, setIsOpen] = createSignal(false);
 
-  const availablePlanets = createMemo(() => {
-    return bodies().filter(
-      (b) => b.name !== 'Sun' && b.name !== SPACESHIP_NAME && b.name !== 'Moon'
-    );
+  const availablePlanets = createMemo(
+    () => {
+      return bodies().filter(
+        (b) => b.name !== 'Sun' && b.name !== SPACESHIP_NAME && b.name !== 'Moon'
+      );
+    },
+    [],
+    {
+      equals: (a, b) => {
+        if (a.length !== b.length) return false;
+        return a.every((body, i) => body.name === b[i]?.name);
+      },
+    }
+  );
+
+  // Automatically validate and sync hohmannParams when available planets change
+  createEffect(() => {
+    const list = availablePlanets();
+    if (list.length < 2) return;
+
+    const current = hohmannParams();
+    let newOrigin = current.origin;
+    let newTarget = current.target;
+
+    const hasOrigin = list.some((p) => p.name === newOrigin);
+    const hasTarget = list.some((p) => p.name === newTarget);
+
+    if (!hasOrigin || !hasTarget || newOrigin === newTarget) {
+      // Find Earth and Mars if they exist, otherwise the first two planets
+      const earthExists = list.some((p) => p.name === 'Earth');
+      const marsExists = list.some((p) => p.name === 'Mars');
+
+      if (earthExists && marsExists) {
+        newOrigin = 'Earth';
+        newTarget = 'Mars';
+      } else {
+        newOrigin = list[0]!.name;
+        newTarget = list[1]!.name;
+      }
+      setHohmannParams({ origin: newOrigin, target: newTarget });
+    }
   });
+
+  // Avoid origin and target being the same planet by automatically switching the other planet
+  const handleOriginChange = (name: string) => {
+    setHohmannParams((p) => {
+      if (p.target === name) {
+        const other = availablePlanets().find((pl) => pl.name !== name);
+        return { origin: name, target: other ? other.name : name };
+      }
+      return { ...p, origin: name };
+    });
+  };
+
+  const handleTargetChange = (name: string) => {
+    setHohmannParams((p) => {
+      if (p.origin === name) {
+        const other = availablePlanets().find((pl) => pl.name !== name);
+        return { origin: other ? other.name : name, target: name };
+      }
+      return { ...p, target: name };
+    });
+  };
 
   const calculation = createMemo(() => {
     const list = bodies();
@@ -94,6 +152,12 @@ export const HohmannPanel: Component = () => {
       vy: vyShip,
       radius: 4,
       color: '#00ffff',
+      launchedFrom: origin.name,
+      // Hohmann properties for the physics loop (BUG-4)
+      hohmannDv2Applied: false,
+      hohmannTargetR: calc.r2,
+      hohmannDv2Val: calc.dv2,
+      hohmannDirection: calc.r2 > calc.r1 ? 'out' : 'in',
     };
 
     // Replace existing spaceship if any
@@ -118,12 +182,12 @@ export const HohmannPanel: Component = () => {
               <label class="mb-1 block text-[10px] text-slate-400 uppercase">Origen</label>
               <select
                 value={hohmannParams().origin}
-                onChange={(e) => setHohmannParams((p) => ({ ...p, origin: e.currentTarget.value }))}
+                onChange={(e) => handleOriginChange(e.currentTarget.value)}
                 class="select select-bordered select-xs w-full border-slate-700 bg-slate-800 text-slate-300"
               >
-                {availablePlanets().map((p) => (
-                  <option value={p.name}>{p.name}</option>
-                ))}
+                <For each={availablePlanets()}>
+                  {(p) => <option value={p.name}>{p.name}</option>}
+                </For>
               </select>
             </div>
 
@@ -131,12 +195,12 @@ export const HohmannPanel: Component = () => {
               <label class="mb-1 block text-[10px] text-slate-400 uppercase">Destino</label>
               <select
                 value={hohmannParams().target}
-                onChange={(e) => setHohmannParams((p) => ({ ...p, target: e.currentTarget.value }))}
+                onChange={(e) => handleTargetChange(e.currentTarget.value)}
                 class="select select-bordered select-xs w-full border-slate-700 bg-slate-800 text-slate-300"
               >
-                {availablePlanets().map((p) => (
-                  <option value={p.name}>{p.name}</option>
-                ))}
+                <For each={availablePlanets()}>
+                  {(p) => <option value={p.name}>{p.name}</option>}
+                </For>
               </select>
             </div>
           </div>

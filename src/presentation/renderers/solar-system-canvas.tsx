@@ -21,13 +21,18 @@ import {
   showLagrange,
   showHohmann,
   hohmannParams,
+  addLogMessage,
 } from '@/features/simulation/stores/simulation-store';
 import { setTooltip } from '@/presentation/shared-components/tooltip-store';
 import { getHoveredBody } from './body-hit-test';
 import { orbitalEnergy } from '@/core/physics/orbital-energy';
 import { SpaceshipLauncher } from './spaceship-launcher';
 import { drawSpaceship } from './draw-spaceship';
-import { SPACESHIP_NAME } from '@/shared/types/spaceship';
+import {
+  SPACESHIP_NAME,
+  SPACESHIP_COLLISION_RADIUS_AU,
+  BODY_COLLISION_RADII_AU,
+} from '@/shared/types/spaceship';
 import {
   tickComparison,
   isComparing,
@@ -148,7 +153,42 @@ function SolarSystemCanvas() {
 
     setBodies((prev) => {
       const next = simulationRuntime.tick(prev, simDt);
-      return next.map((b: BodyState, i: number) => ({ ...prev[i]!, ...b }));
+      return next.map((b: BodyState, i: number) => {
+        const prevBody = prev[i]!;
+        const nextBody = { ...prevBody, ...b } as RenderBody;
+
+        if (nextBody.name === SPACESHIP_NAME && nextBody.hohmannDv2Applied === false) {
+          const r = Math.sqrt(nextBody.x * nextBody.x + nextBody.y * nextBody.y);
+          const targetR = nextBody.hohmannTargetR as number;
+          const direction = nextBody.hohmannDirection as 'out' | 'in';
+
+          let triggered = false;
+          if (direction === 'out' && r >= targetR) {
+            triggered = true;
+          } else if (direction === 'in' && r <= targetR) {
+            triggered = true;
+          }
+
+          if (triggered) {
+            const vSpeed = Math.sqrt(nextBody.vx * nextBody.vx + nextBody.vy * nextBody.vy);
+            if (vSpeed > 0) {
+              const tx = nextBody.vx / vSpeed;
+              const ty = nextBody.vy / vSpeed;
+              const dv2 = nextBody.hohmannDv2Val as number;
+
+              nextBody.vx += dv2 * tx;
+              nextBody.vy += dv2 * ty;
+              nextBody.hohmannDv2Applied = true;
+
+              const dv2KmS = dv2 * 1731.48;
+              addLogMessage(
+                `[INFO] Hohmann: Segundo impulso (Δv₂ = ${dv2KmS.toFixed(2)} km/s) aplicado. Órbita circularizada.`
+              );
+            }
+          }
+        }
+        return nextBody;
+      });
     });
 
     setCurrentDay((d) => d + simDt);
@@ -172,14 +212,22 @@ function SolarSystemCanvas() {
     if (!ctx) return;
 
     const camera = renderer.getCamera();
-    const scale = camera.scale;
+    let scale = camera.scale;
 
     const ship = bodies().find((b) => b.name === SPACESHIP_NAME);
 
-    // Dynamic Camera Follow mode for the spaceship
+    // Dynamic Camera Follow mode for the spaceship with lerp and adaptive zoom
     if (followSpaceship() && ship) {
-      camera.offsetX = -ship.x * scale;
-      camera.offsetY = ship.y * scale;
+      const speed = Math.sqrt(ship.vx * ship.vx + ship.vy * ship.vy);
+      // Adaptive zoom: slower speed -> zoom in (larger scale), higher speed -> zoom out (smaller scale)
+      const targetScale = Math.max(35, Math.min(300, 1.8 / (speed + 0.005)));
+      camera.scale += (targetScale - camera.scale) * 0.05;
+      scale = camera.scale;
+
+      const targetX = -ship.x * scale;
+      const targetY = ship.y * scale;
+      camera.offsetX += (targetX - camera.offsetX) * 0.05;
+      camera.offsetY += (targetY - camera.offsetY) * 0.05;
     }
 
     const { cx, cy } = camera.getCenter();
@@ -424,19 +472,38 @@ function SolarSystemCanvas() {
     const { cx, cy } = camera.getCenter();
     launcher = new SpaceshipLauncher(canvasRef, context, camera.scale, cx, cy, {
       onLaunch: (spaceship) => {
+        let launchedFrom: string | undefined;
+        const currentBodies = bodies();
+        for (const body of currentBodies) {
+          const dx = spaceship.x - body.x;
+          const dy = spaceship.y - body.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          const bodyRadiusAU =
+            BODY_COLLISION_RADII_AU[body.name] ?? SPACESHIP_COLLISION_RADIUS_AU + body.mass * 1e-26;
+          if (dist < bodyRadiusAU * 1.5) {
+            launchedFrom = body.name;
+            break;
+          }
+        }
+
         const spaceshipRender: RenderBody = {
           ...spaceship,
           mass: 1e-25,
           radius: 4,
           color: '#00ffff',
+          launchedFrom,
         };
         setBodies([...bodies(), spaceshipRender]);
+        addLogMessage(
+          `[INFO] Nave lanzada: pos = (${spaceship.x.toFixed(3)}, ${spaceship.y.toFixed(3)}) UA, vel = (${spaceship.vx.toFixed(4)}, ${spaceship.vy.toFixed(4)}) UA/día.`
+        );
       },
       onCancel: () => {
         setBodies(bodies().filter((b) => b.name !== SPACESHIP_NAME));
       },
       onImpact: (bodyName) => {
         console.info(`[SpaceshipLauncher] Impacto con ${bodyName}`);
+        addLogMessage(`[CRITICAL] Nave espacial destruida por colisión con ${bodyName}.`);
       },
     });
 

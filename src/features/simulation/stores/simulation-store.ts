@@ -38,7 +38,15 @@ const [hohmannParams, setHohmannParams] = createSignal({
   target: "Mars",
 });
 
+function addLogMessage(msg: string): void {
+  setLogMessages((prev) => {
+    const next = [...prev, msg];
+    return next.length > 100 ? next.slice(next.length - 100) : next;
+  });
+}
+
 export {
+  addLogMessage,
   bodies,
   setBodies,
   currentDay,

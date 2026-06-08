@@ -1,4 +1,4 @@
-import type { BodyState } from "@/shared/types";
+import type { BodyState, RenderBody } from "@/shared/types";
 import {
   type LaunchState,
   SPACESHIP_NAME,
@@ -106,11 +106,34 @@ export class SpaceshipLauncher {
   }
 
   checkCollisions(bodies: BodyState[]): BodyState[] {
-    const spaceship = bodies.find((b) => b.name === SPACESHIP_NAME);
+    const spaceship = bodies.find((b) => b.name === SPACESHIP_NAME) as RenderBody | undefined;
     if (!spaceship) return bodies;
+
+    // If spaceship has a launchedFrom property, check if it has cleared that body's collision radius
+    if (spaceship.launchedFrom) {
+      const launcherBody = bodies.find((b) => b.name === spaceship.launchedFrom);
+      if (launcherBody) {
+        const dx = spaceship.x - launcherBody.x;
+        const dy = spaceship.y - launcherBody.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const bodyRadiusAU =
+          BODY_COLLISION_RADII_AU[launcherBody.name] ??
+          SPACESHIP_COLLISION_RADIUS_AU + launcherBody.mass * 1e-26;
+
+        if (dist > bodyRadiusAU * 1.1) {
+          // Spaceship has cleared the collision boundary, safe to enable collisions
+          delete spaceship.launchedFrom;
+        }
+      }
+    }
 
     for (const body of bodies) {
       if (body.name === SPACESHIP_NAME) continue;
+
+      // Ignore collision if the spaceship is still within the origin body's collision radius
+      if (spaceship.launchedFrom === body.name) {
+        continue;
+      }
 
       const dx = spaceship.x - body.x;
       const dy = spaceship.y - body.y;

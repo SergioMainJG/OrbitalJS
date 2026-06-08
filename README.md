@@ -12,6 +12,9 @@
 
 Simulador de órbitas planetarias con datos reales de la NASA. Motor de integración numérica RK4 en TypeScript con SolidJS, visualización Canvas 2D y panel de energía con Chart.js.
 
+### Propósito Pedagógico
+OrbitalJS es una herramienta educativa e interactiva diseñada para la enseñanza y el aprendizaje de la mecánica celeste, la astrodinámica y los métodos de integración numérica. Su objetivo es permitir a los usuarios visualizar la dinámica orbital de sistemas planetarios complejos usando efemérides reales de la NASA JPL, estudiar la deriva numérica (acumulación de error de redondeo/truncamiento) y verificar de forma interactiva la conservación de la energía mecánica en el espacio.
+
 ## Requisitos previos
 
 | Herramienta | Versión mínima | Para qué                            |
@@ -32,6 +35,13 @@ bun run dev       # http://localhost:3000
 ```
 
 > **Nota**: No olviden copiar el `.env.template` a `.env`
+
+### Obtención de Datos Reales (NASA Horizons)
+El proyecto incluye un script de integración con el servicio API JPL Horizons de la NASA. Para actualizar las posiciones planetarias efemérides (NAIF IDs) locales:
+```sh
+bun run fetch:planets
+```
+Este comando consulta secuencialmente el servicio de la NASA, parsea las coordenadas tridimensionales en vectores cartesianos J2000 y actualiza el archivo de fallback local.
 
 ## Scripts disponibles
 
@@ -97,6 +107,19 @@ El proyecto ha sido refactorizado siguiendo una arquitectura limpia y modular di
 ### Cambios Arquitectónicos (Clean Architecture)
 
 El simulador se ha estructurado bajo los principios de **Arquitectura Limpia (Clean Architecture)** con el fin de independizar la lógica física y matemática de la interfaz gráfica y de cualquier framework reactivo. Esto garantiza la testabilidad y la mantenibilidad a largo plazo mediante las siguientes capas desacopladas:
+
+```mermaid
+graph TD
+  Presentation[Capa de Presentación: CanvasRenderer, Renderers, Layouts] --> Application[Capa de Aplicación: use-cases, registries, services]
+  Features[Capa de Features: SolidJS components, stores] --> Application
+  Application --> Core[Capa de Core/Dominio: Integración RK4/Euler, Física, Diagnostics]
+  Shared[Capa Shared: Constants, Types, Utils] --> Core
+  Shared --> Application
+  Shared --> Features
+  Shared --> Presentation
+```
+
+El flujo de control va desde la capa exterior de presentación/features hacia la capa de aplicación y, finalmente, hacia la capa central de dominio/core. A continuación se detallan las capas:
 
 1. **Capa de Dominio / Core (`src/core/`)**:
    * **Física y Lógica Matemática Pura**: Contiene las ecuaciones de movimiento e integradores numéricos (como Runge-Kutta de 4.º orden y Euler en `core/physics/`), cálculo de diagnósticos orbitales (como deriva de energía mecánica y momento angular en `core/diagnostics/`) y validación física de órbitas cerradas en `core/validators/`.
@@ -230,6 +253,45 @@ Yo, **Sergio Arce**, soy quien va a escribir el testing. Si no saben como usar `
 Cada que hacen un commit, se ejecuta un commit de testing automatico, tanto en local como en github (el wf que implementé).
 
 Voy a implementar el testing correspondiente a cada issue de cada sprint, y reitero, reimplementen si así lo consideran necesarios
+
+## Fundamentos Matemáticos y Físicos
+
+El simulador implementa dos métodos de integración numérica y herramientas para medir la deriva de energía. A continuación se resumen sus bases matemáticas:
+
+### 1. Integración Numérica Runge-Kutta de 4.º Orden (RK4)
+Para resolver las ecuaciones diferenciales del movimiento $\ddot{\mathbf{r}} = \mathbf{a}(\mathbf{r})$, el método RK4 calcula cuatro aproximaciones de la derivada dentro de cada paso temporal $dt$:
+
+1. **Evaluación al inicio del intervalo ($k_1$):**
+   $$k_{1,v} = \mathbf{a}(\mathbf{r}_n) \cdot dt$$
+   $$k_{1,r} = \mathbf{v}_n \cdot dt$$
+
+2. **Evaluación en la mitad del intervalo usando $k_1$ ($k_2$):**
+   $$k_{2,v} = \mathbf{a}(\mathbf{r}_n + \frac{1}{2}k_{1,r}) \cdot dt$$
+   $$k_{2,r} = (\mathbf{v}_n + \frac{1}{2}k_{1,v}) \cdot dt$$
+
+3. **Evaluación en la mitad del intervalo usando $k_2$ ($k_3$):**
+   $$k_{3,v} = \mathbf{a}(\mathbf{r}_n + \frac{1}{2}k_{2,r}) \cdot dt$$
+   $$k_{3,r} = (\mathbf{v}_n + \frac{1}{2}k_{2,v}) \cdot dt$$
+
+4. **Evaluación al final del intervalo usando $k_3$ ($k_4$):**
+   $$k_{4,v} = \mathbf{a}(\mathbf{r}_n + k_{3,r}) \cdot dt$$
+   $$k_{4,r} = (\mathbf{v}_n + k_{3,v}) \cdot dt$$
+
+**Actualización final:**
+$$\mathbf{r}_{n+1} = \mathbf{r}_n + \frac{1}{6}(k_{1,r} + 2k_{2,r} + 2k_{3,r} + k_{4,r})$$
+$$\mathbf{v}_{n+1} = \mathbf{v}_n + \frac{1}{6}(k_{1,v} + 2k_{2,v} + 2k_{3,v} + k_{4,v})$$
+
+### 2. Conservación de la Energía Mecánica
+En un sistema gravitatorio aislado, la energía mecánica total $E_{\text{total}} = E_{\text{cinética}} + E_{\text{potencial}}$ debe permanecer constante.
+* **Energía Cinética ($T$):**
+  $$T = \sum_{i} \frac{1}{2} m_i \|\mathbf{v}_i\|^2$$
+* **Energía Potencial Gravitatoria ($U$):**
+  $$U = -\sum_{i} \sum_{j < i} \frac{G m_i m_j}{\|\mathbf{r}_i - \mathbf{r}_j\|}$$
+
+La **deriva de energía (Drift)** mide el error acumulado relativo de la energía total del sistema respecto al instante inicial $t=0$:
+$$\text{Drift (\%)} = \frac{|E_{\text{total}}(t) - E_{\text{total}}(0)|}{|E_{\text{total}}(0)|} \times 100$$
+
+Un valor superior al $1\%$ indica que el integrador está perdiendo precisión física debido a un paso temporal ($dt$) demasiado grande para la velocidad y proximidad de los cuerpos celestes (por ejemplo, cerca del periápside).
 
 ## Production URL
 

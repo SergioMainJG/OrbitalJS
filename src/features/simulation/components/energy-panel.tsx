@@ -17,6 +17,7 @@ import type { DriftStatus, EnergyPanelProps, EnergySnapshot } from '@/shared/typ
 import { SERIES_COLORS } from '@/shared/constants';
 import { setTooltip } from '@/presentation/shared-components/tooltip-store';
 import { ENERGY_PANEL_TOOLTIP } from '@/shared/constants/math-explanations';
+import { addLogMessage } from '../stores/simulation-store';
 
 Chart.register(
   LineController,
@@ -45,6 +46,7 @@ export const EnergyPanelComponent: Component<EnergyPanelProps> = (props) => {
 
   let lastBodyCount = 0;
   let lastBodyNames = '';
+  let hasLoggedHighDrift = false;
 
   const latestSnapshot = () => {
     const h = history();
@@ -79,6 +81,7 @@ export const EnergyPanelComponent: Component<EnergyPanelProps> = (props) => {
       lastBodyNames = currentBodyNames;
       setInitialEnergy(et);
       setHistory([]);
+      hasLoggedHighDrift = false;
     } else {
       setInitialEnergy((prev) => (prev === null ? et : prev));
     }
@@ -89,6 +92,14 @@ export const EnergyPanelComponent: Component<EnergyPanelProps> = (props) => {
       const next = [...prev, snap];
       return next.length > MAX_HISTORY ? next.slice(next.length - MAX_HISTORY) : next;
     });
+
+    const currentDrift = energyDrift(et, initialEnergy() ?? et);
+    if (currentDrift > 1 && !hasLoggedHighDrift) {
+      hasLoggedHighDrift = true;
+      addLogMessage(
+        `[WARNING] Deriva de energía alta (${currentDrift.toFixed(3)}%). Se recomienda un paso temporal (dt) más pequeño.`
+      );
+    }
   });
 
   onMount(() => {

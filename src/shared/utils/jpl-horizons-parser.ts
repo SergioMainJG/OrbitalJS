@@ -66,6 +66,36 @@ const PLANET_PHYSICS: Record<PlanetKey, PlanetPhysics> = {
     radiusKm: 3389.5,
     gm: gmToAuD2(42828.375),
   },
+  ceres: {
+    mass: 9.393e20,
+    radiusKm: 469.73,
+    gm: gmToAuD2(62.63),
+  },
+  jupiter: {
+    mass: 1.898e27,
+    radiusKm: 71492.0,
+    gm: gmToAuD2(126686511.0),
+  },
+  saturn: {
+    mass: 5.683e26,
+    radiusKm: 60268.0,
+    gm: gmToAuD2(37931187.0),
+  },
+  uranus: {
+    mass: 8.681e25,
+    radiusKm: 25559.0,
+    gm: gmToAuD2(5793939.0),
+  },
+  neptune: {
+    mass: 1.024e26,
+    radiusKm: 24764.0,
+    gm: gmToAuD2(6836529.0),
+  },
+  pluto: {
+    mass: 1.303e22,
+    radiusKm: 1188.3,
+    gm: gmToAuD2(870.3),
+  },
 };
 
 const PLANET_NAMES: Record<PlanetKey, string> = {
@@ -73,6 +103,12 @@ const PLANET_NAMES: Record<PlanetKey, string> = {
   venus: "Venus",
   earth: "Earth",
   mars: "Mars",
+  ceres: "Ceres",
+  jupiter: "Jupiter",
+  saturn: "Saturn",
+  uranus: "Uranus",
+  neptune: "Neptune",
+  pluto: "Pluto",
 };
 
 /**
@@ -84,6 +120,12 @@ const PLANET_COLORS: Record<PlanetKey, string> = {
   venus: "#e8cda0", // dorado pálido / nubes de ácido sulfúrico
   earth: "#4fa3e0", // azul oceánico
   mars: "#c1440e", // rojo óxido de hierro
+  ceres: "#a0a0a0", // gris asteroide
+  jupiter: "#d4a373", // beige/marrón bandas
+  saturn: "#e9c46a", // amarillo anillos
+  uranus: "#a8dadc", // azul cian pálido
+  neptune: "#457b9d", // azul profundo
+  pluto: "#f4a261", // naranja/marrón helado
 };
 
 // ---------------------------------------------------------------------------

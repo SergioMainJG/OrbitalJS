@@ -154,17 +154,17 @@ describe("fetchAllPlanets", () => {
     vi.unstubAllGlobals();
   });
 
-  it("retorna un Map con los 4 planetas cuando todo va bien", async () => {
+  it("retorna un Map con todos los planetas cuando todo va bien", async () => {
     vi.mocked(fetch).mockResolvedValue(mockResponse(EARTH_FIXTURE));
 
     const result = await fetchAllPlanets("2000-Jan-01");
 
-    expect(result.size).toBe(4);
+    expect(result.size).toBe(Object.keys(PLANET_NAIF_IDS).length);
     expect(result.has("mercury")).toBe(true);
     expect(result.has("venus")).toBe(true);
     expect(result.has("earth")).toBe(true);
     expect(result.has("mars")).toBe(true);
-  });
+  }, 15000);
 
   it("las claves del Map coinciden con PLANET_NAIF_IDS", async () => {
     vi.mocked(fetch).mockResolvedValue(mockResponse(EARTH_FIXTURE));
@@ -174,7 +174,7 @@ describe("fetchAllPlanets", () => {
     for (const key of Object.keys(PLANET_NAIF_IDS)) {
       expect(result.has(key as keyof typeof PLANET_NAIF_IDS)).toBe(true);
     }
-  });
+  }, 15000);
 
   it("lanza error cuando todos los fetch fallan", async () => {
     vi.mocked(fetch).mockRejectedValue(new Error("Network down"));
@@ -196,9 +196,8 @@ describe("fetchAllPlanets", () => {
 
     const result = await fetchAllPlanets("2000-Jan-01");
 
-    // 3 de 4 deben estar presentes
-    expect(result.size).toBe(3);
-  });
+    expect(result.size).toBe(Object.keys(PLANET_NAIF_IDS).length - 1);
+  }, 15000);
 });
 
 // ---------------------------------------------------------------------------

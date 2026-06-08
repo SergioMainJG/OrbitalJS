@@ -26,6 +26,12 @@ export const PLANET_NAIF_IDS = {
   venus: "299",
   earth: "399",
   mars: "499",
+  ceres: "1",
+  jupiter: "599",
+  saturn: "699",
+  uranus: "799",
+  neptune: "899",
+  pluto: "999",
 } as const;
 
 export type PlanetKey = keyof typeof PLANET_NAIF_IDS;

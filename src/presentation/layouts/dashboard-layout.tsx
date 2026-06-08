@@ -13,7 +13,7 @@ const DashboardLayout: Component = () => {
   return (
     <>
       <div class="flex h-auto min-h-screen w-full flex-col gap-3 overflow-y-auto bg-[#0a0a1a] p-3 lg:grid lg:h-screen lg:grid-cols-[260px_1fr_300px] lg:grid-rows-[1fr_140px] lg:gap-2 lg:overflow-hidden lg:p-2">
-        <div class="flex h-auto w-full flex-col gap-2 overflow-visible lg:col-start-1 lg:row-start-1 lg:row-end-3 lg:h-full lg:overflow-hidden">
+        <div class="flex h-auto w-full flex-col gap-2 overflow-visible lg:col-start-1 lg:row-start-1 lg:row-end-3 lg:h-full lg:overflow-y-auto">
           <LeftPanel />
         </div>
 
