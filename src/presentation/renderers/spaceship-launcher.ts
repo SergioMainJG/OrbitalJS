@@ -225,7 +225,7 @@ export class SpaceshipLauncher {
     }
 
     const posAU = canvasToAU(origin, this.cx, this.cy, this.scale);
-    const velAUDay = dragToVelocity({ dx, dy }, this.scale);
+    const velAUDay = dragToVelocity({ dx, dy }, this.scale, posAU);
     const spaceship = createSpaceshipBody(posAU, velAUDay);
 
     this.launchState = { phase: "launched", originCanvas: null, currentCanvas: null };

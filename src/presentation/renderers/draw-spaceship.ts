@@ -99,10 +99,10 @@ export function drawVelocityArrow(
 
   drawShapeTriangle(ctx, origin.x, origin.y, angle, "rgba(0,255,255,0.5)");
 
-  const speed = (length / scale) * SPACESHIP_LAUNCH_SPEED_FACTOR;
+  const speedAUday = length / scale;
   ctx.fillStyle = "rgba(0,255,255,0.8)";
   ctx.font = "11px monospace";
-  ctx.fillText(`v ≈ ${speed.toFixed(4)} AU/día`, current.x + 10, current.y - 10);
+  ctx.fillText(`v ≈ ${speedAUday.toFixed(4)} AU/día`, current.x + 10, current.y - 10);
 
   ctx.restore();
 }
