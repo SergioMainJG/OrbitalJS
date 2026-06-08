@@ -4,14 +4,16 @@ import {
   tickComparison as tickComparisonEngine,
   makeEmptyComparisonState,
 } from "@/core/engines/comparison-engine";
-import { SUN_EARTH_SCENARIO } from "@/shared/scenarios/sun-earth.scenario";
+import { SOLAR_SYSTEM_SCENARIO } from "@/shared/scenarios/solar-system.scenario";
 import type { BodyState, ComparisonState } from "@/shared/types";
 
-export const SUN_EARTH_INITIAL = SUN_EARTH_SCENARIO.bodies;
+export const SOLAR_SYSTEM_INITIAL = SOLAR_SYSTEM_SCENARIO.bodies;
 
 const makeInitialState = (bodies: BodyState[]): ComparisonState => makeEmptyComparisonState(bodies);
 
-const [state, setState] = createStore<ComparisonState>(makeInitialState(SUN_EARTH_SCENARIO.bodies));
+const [state, setState] = createStore<ComparisonState>(
+  makeInitialState(SOLAR_SYSTEM_SCENARIO.bodies),
+);
 
 const [isComparing, setIsComparing] = createSignal(false);
 
@@ -38,7 +40,7 @@ export function initComparison(bodies: BodyState[]): void {
 }
 
 export function resetComparison(): void {
-  setState(makeInitialState(SUN_EARTH_SCENARIO.bodies));
+  setState(makeInitialState(SOLAR_SYSTEM_SCENARIO.bodies));
 }
 
 export { state as comparisonState, isComparing, setIsComparing };

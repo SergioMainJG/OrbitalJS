@@ -6,6 +6,7 @@ import {
   createSpaceshipBody,
   dragToVelocity,
   SPACESHIP_COLLISION_RADIUS_AU,
+  BODY_COLLISION_RADII_AU,
 } from "@/shared/types/spaceship";
 import { drawVelocityArrow, drawImpactMessage, clearSpaceshipTrail } from "./draw-spaceship";
 
@@ -115,7 +116,8 @@ export class SpaceshipLauncher {
       const dy = spaceship.y - body.y;
       const dist = Math.sqrt(dx * dx + dy * dy);
 
-      const bodyRadiusAU = SPACESHIP_COLLISION_RADIUS_AU + body.mass * 1e-26;
+      const bodyRadiusAU =
+        BODY_COLLISION_RADII_AU[body.name] ?? SPACESHIP_COLLISION_RADIUS_AU + body.mass * 1e-26;
 
       if (dist < bodyRadiusAU) {
         const impactPx = {

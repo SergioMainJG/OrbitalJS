@@ -1,8 +1,9 @@
 import { onMount, onCleanup, createEffect } from 'solid-js';
 import { CanvasRenderer } from './canvas-renderer';
 import { AnimationLoop } from '@/core/engines/animation-loop';
-import { PhysicsEngine, type IntegratorName } from '@/core/engines/physics-engine';
 import { rendererRegistry } from '@/application/registries/renderer-registry';
+import { simulationRuntime } from '@/core/engines/simulation-runtime';
+import type { IntegratorName } from '@/core/engines/physics-engine';
 import {
   bodies,
   setBodies,
@@ -14,6 +15,12 @@ import {
   dt,
   integrator,
   EARTH_INITIAL_POS,
+  showOrbit,
+  showTrajectory,
+  followSpaceship,
+  showLagrange,
+  showHohmann,
+  hohmannParams,
 } from '@/features/simulation/stores/simulation-store';
 import { setTooltip } from '@/presentation/shared-components/tooltip-store';
 import { getHoveredBody } from './body-hit-test';
@@ -27,7 +34,7 @@ import {
   comparisonState,
 } from '@/features/comparison/stores/comparison-store';
 import { COLORS, STYLES, UNIVERSAL_CONSTS } from '@/shared/constants';
-import type { RenderBody } from '@/shared/types';
+import type { RenderBody, BodyState } from '@/shared/types';
 import type { Scene } from '@/shared/types/scene';
 
 const { MAX_DT_EULER, MAX_DT_RK4 } = UNIVERSAL_CONSTS;
@@ -129,21 +136,19 @@ function SolarSystemCanvas() {
   let startX = 0;
   let startY = 0;
 
-  const physicsEngine = new PhysicsEngine();
-
   const updatePhysics = (_wallDt: number) => {
     if (!isRunning()) return;
 
     const currentIntegrator = integrator() as IntegratorName;
-    physicsEngine.setIntegrator(currentIntegrator);
+    simulationRuntime.setIntegrator(currentIntegrator);
 
     const rawDt = dt() * simSpeed();
     const maxDt = currentIntegrator === 'Euler' ? MAX_DT_EULER : MAX_DT_RK4;
     const simDt = Math.min(rawDt, maxDt);
 
     setBodies((prev) => {
-      const next = physicsEngine.step(prev, simDt);
-      return next.map((b, i) => ({ ...prev[i]!, ...b }));
+      const next = simulationRuntime.tick(prev, simDt);
+      return next.map((b: BodyState, i: number) => ({ ...prev[i]!, ...b }));
     });
 
     setCurrentDay((d) => d + simDt);
@@ -168,12 +173,112 @@ function SolarSystemCanvas() {
 
     const camera = renderer.getCamera();
     const scale = camera.scale;
-    const { cx, cy } = camera.getCenter();
 
-    renderer.render(buildScene(bodies(), dt(), currentDay()));
+    const ship = bodies().find((b) => b.name === SPACESHIP_NAME);
+
+    // Dynamic Camera Follow mode for the spaceship
+    if (followSpaceship() && ship) {
+      camera.offsetX = -ship.x * scale;
+      camera.offsetY = ship.y * scale;
+    }
+
+    const { cx, cy } = camera.getCenter();
+    launcher?.updateTransform(scale, cx, cy);
+
+    // Render bodies with showOrbit toggle
+    renderer.render(buildScene(bodies(), dt(), currentDay()), showOrbit());
 
     if (isComparing()) {
       drawComparisonTrails(ctx, scale, cx, cy);
+    }
+
+    // Draw Lagrange Points (L1 - L5) if enabled
+    if (showLagrange()) {
+      const sun = bodies().find((b) => b.name === 'Sun');
+      const earth = bodies().find((b) => b.name === 'Earth');
+      if (sun && earth) {
+        const dx = earth.x - sun.x;
+        const dy = earth.y - sun.y;
+        const R = Math.sqrt(dx * dx + dy * dy);
+        if (R > 0) {
+          const ux = dx / R;
+          const uy = dy / R;
+
+          const alpha = earth.mass / (sun.mass + earth.mass);
+          const rL = R * Math.pow(alpha / 3, 1 / 3);
+
+          const x1 = earth.x - rL * ux;
+          const y1 = earth.y - rL * uy;
+
+          const x2 = earth.x + rL * ux;
+          const y2 = earth.y + rL * uy;
+
+          const x3 = sun.x - R * (1 - (5 / 12) * alpha) * ux;
+          const y3 = sun.y - R * (1 - (5 / 12) * alpha) * uy;
+
+          const cos60 = 0.5;
+          const sin60 = 0.8660254;
+          const x4 = sun.x + R * (ux * cos60 - uy * sin60);
+          const y4 = sun.y + R * (ux * sin60 + uy * cos60);
+
+          const x5 = sun.x + R * (ux * cos60 + uy * sin60);
+          const y5 = sun.y + R * (-ux * sin60 + uy * cos60);
+
+          const points = [
+            { name: 'L1', x: x1, y: y1 },
+            { name: 'L2', x: x2, y: y2 },
+            { name: 'L3', x: x3, y: y3 },
+            { name: 'L4', x: x4, y: y4 },
+            { name: 'L5', x: x5, y: y5 },
+          ];
+
+          ctx.save();
+          ctx.fillStyle = '#10b981';
+          ctx.strokeStyle = '#10b981';
+          ctx.font = 'bold 9px monospace';
+          for (const p of points) {
+            const px = cx + p.x * scale;
+            const py = cy - p.y * scale;
+            ctx.beginPath();
+            ctx.arc(px, py, 3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillText(p.name, px + 5, py - 4);
+          }
+          ctx.restore();
+        }
+      }
+    }
+
+    // Draw Hohmann Transfer Ellipse if enabled
+    if (showHohmann()) {
+      const params = hohmannParams();
+      const originBody = bodies().find((b) => b.name === params.origin);
+      const targetBody = bodies().find((b) => b.name === params.target);
+      if (originBody && targetBody && originBody.name !== targetBody.name) {
+        const r1 = Math.sqrt(originBody.x * originBody.x + originBody.y * originBody.y);
+        const r2 = Math.sqrt(targetBody.x * targetBody.x + targetBody.y * targetBody.y);
+        if (r1 > 0 && r2 > 0) {
+          const a = (r1 + r2) / 2;
+          const b = Math.sqrt(r1 * r2);
+          const c = Math.abs(r1 - r2) / 2;
+          const theta = Math.atan2(originBody.y, originBody.x);
+
+          const ellipseCenterX = r1 < r2 ? -c * Math.cos(theta) : c * Math.cos(theta);
+          const ellipseCenterY = r1 < r2 ? -c * Math.sin(theta) : c * Math.sin(theta);
+
+          const ex = cx + ellipseCenterX * scale;
+          const ey = cy - ellipseCenterY * scale;
+
+          ctx.save();
+          ctx.beginPath();
+          ctx.setLineDash([4, 4]);
+          ctx.strokeStyle = '#a855f7';
+          ctx.lineWidth = 1.5;
+          ctx.ellipse(ex, ey, a * scale, b * scale, -theta, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
     }
 
     const earthInitialX = EARTH_INITIAL_POS.x;
@@ -192,9 +297,8 @@ function SolarSystemCanvas() {
     ctx.fillText('INICIO', initialPx - 18, initialPy - 8);
     ctx.restore();
 
-    const ship = bodies().find((b) => b.name === SPACESHIP_NAME);
     if (ship) {
-      drawSpaceship(ctx, ship, scale, cx, cy);
+      drawSpaceship(ctx, ship, scale, cx, cy, showTrajectory());
     }
 
     launcher?.drawOverlay();

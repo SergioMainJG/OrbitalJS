@@ -13,6 +13,9 @@ export function loadScenario(scenario: SimulationScenario): void {
   const renderer = rendererRegistry.get("canvas") as CanvasRenderer | undefined;
   if (renderer) {
     renderer.clearTrails();
+    if (scenario.maxOrbitAU !== undefined) {
+      renderer.setMaxOrbitAU(scenario.maxOrbitAU);
+    }
   }
 
   const renderBodies: RenderBody[] = scenario.bodies.map((b) => ({

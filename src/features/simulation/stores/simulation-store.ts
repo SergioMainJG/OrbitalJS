@@ -2,9 +2,8 @@ import { createSignal } from "solid-js";
 import type { RenderBody } from "@/shared/types";
 import { SOLAR_SYSTEM_SCENARIO } from "@/shared/scenarios/solar-system.scenario";
 
-// BUG FIX: MAX_ORBIT_AU updated to 40 to accommodate Pluto (39.5 AU).
-// The camera auto-scales based on this value, so the full solar system is visible.
-export const MAX_ORBIT_AU = 40;
+// Default MAX_ORBIT_AU set to 2.0 to center on inner solar system (Mercury to Mars)
+export const MAX_ORBIT_AU = 2.0;
 
 // Scenario bodies without rendering properties — these are injected by loadScenario use-case
 const rawScenarioBodies = SOLAR_SYSTEM_SCENARIO.bodies;
@@ -27,8 +26,17 @@ const [simulatedTime, setSimulatedTime] = createSignal(365);
 const [logMessages, setLogMessages] = createSignal<string[]>([
   "[INFO] Simulación iniciada",
   "[INFO] Integrador: RK4 | dt: 0.5 días",
-  "[INFO] Sistema Solar Completo: Sol + 8 planetas + Plutón",
+  "[INFO] Sistema Solar: Sol + 4 planetas interiores (NASA J2000)",
 ]);
+
+// New signals for Hohmann, Lagrange, and Camera Follow features
+const [followSpaceship, setFollowSpaceship] = createSignal(false);
+const [showLagrange, setShowLagrange] = createSignal(false);
+const [showHohmann, setShowHohmann] = createSignal(false);
+const [hohmannParams, setHohmannParams] = createSignal({
+  origin: "Earth",
+  target: "Mars",
+});
 
 export {
   bodies,
@@ -52,4 +60,12 @@ export {
   logMessages,
   setLogMessages,
   rawScenarioBodies,
+  followSpaceship,
+  setFollowSpaceship,
+  showLagrange,
+  setShowLagrange,
+  showHohmann,
+  setShowHohmann,
+  hohmannParams,
+  setHohmannParams,
 };

@@ -40,6 +40,11 @@ export class CanvasRenderer implements Renderer {
     return this.camera;
   }
 
+  public setMaxOrbitAU(val: number): void {
+    this.maxOrbitAU = val;
+    this.camera.autoScale(val);
+  }
+
   private initStarsBackground(): void {
     this.starsCanvas = document.createElement("canvas");
     this.starsCanvas.width = this.width;
@@ -74,10 +79,10 @@ export class CanvasRenderer implements Renderer {
     this.drawBodiesService.clearTrails();
   }
 
-  render(scene: Scene): void {
+  render(scene: Scene, showOrbit: boolean = true): void {
     this.clear();
     const { cx, cy } = this.camera.getCenter();
-    this.drawBodiesService.draw(this.ctx, scene.bodies, this.camera.scale, cx, cy);
+    this.drawBodiesService.draw(this.ctx, scene.bodies, this.camera.scale, cx, cy, showOrbit);
   }
 
   destroy(): void {

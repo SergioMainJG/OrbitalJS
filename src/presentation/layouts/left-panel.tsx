@@ -2,6 +2,7 @@ import { type Component } from 'solid-js';
 import SimulationControls from '@/features/simulation/components/simulation-controls';
 import ComparisonToggle from '@/features/comparison/components/comparison-toggle';
 import HowItWorks from '@/features/theory/components/how-it-works';
+import { HohmannPanel } from '@/features/simulation/components/hohmann-panel';
 
 const LeftPanel: Component = () => {
   return (
@@ -13,9 +14,8 @@ const LeftPanel: Component = () => {
       <div class="mt-4 border-t border-slate-700 pt-4">
         <ComparisonToggle />
       </div>
-      <div class="mt-2">
-        <HowItWorks />
-      </div>
+      <HohmannPanel />
+      <HowItWorks />
     </div>
   );
 };

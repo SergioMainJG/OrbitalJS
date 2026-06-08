@@ -28,32 +28,30 @@ export function drawSpaceship(
   scale: number,
   cx: number,
   cy: number,
+  showTrajectory: boolean = true,
 ): void {
   const px = cx + body.x * scale;
   const py = cy - body.y * scale;
 
   spaceshipTrail = addTrailPoint(spaceshipTrail, { x: px, y: py }, SPACESHIP_TRAIL_LENGTH);
 
-  for (let i = 1; i < spaceshipTrail.length; i++) {
-    const opacity = i / spaceshipTrail.length;
-    const prev = spaceshipTrail[i - 1]!;
-    const curr = spaceshipTrail[i]!;
+  if (showTrajectory) {
+    for (let i = 1; i < spaceshipTrail.length; i++) {
+      const opacity = i / spaceshipTrail.length;
+      const prev = spaceshipTrail[i - 1]!;
+      const curr = spaceshipTrail[i]!;
 
-    const r = Math.floor(opacity * 255);
-    const g = 255;
-    const b = 255;
-    const a = Math.floor(opacity * 200)
-      .toString(16)
-      .padStart(2, "0");
+      const r = Math.floor(opacity * 255);
+      const g = 255;
+      const b = 255;
 
-    ctx.beginPath();
-    ctx.moveTo(prev.x, prev.y);
-    ctx.lineTo(curr.x, curr.y);
-    ctx.strokeStyle = `rgba(${r},${g},${b},${opacity})`;
-    ctx.lineWidth = 1.2;
-    ctx.stroke();
-
-    void a;
+      ctx.beginPath();
+      ctx.moveTo(prev.x, prev.y);
+      ctx.lineTo(curr.x, curr.y);
+      ctx.strokeStyle = `rgba(${r},${g},${b},${opacity})`;
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+    }
   }
 
   const angle = Math.atan2(-body.vy, body.vx);

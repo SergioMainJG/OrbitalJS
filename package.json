@@ -16,7 +16,8 @@
     "lint:fix": "bun x oxlint . --fix",
     "fmt": "bun x oxfmt 'src/**/*.ts' && prettier --write \"src/**/*.{html,tsx,css}\"",
     "fmt:check": "bun x oxfmt --check 'src/**/*.ts' && prettier --check \"src/**/*.{html,tsx,css}\"",
-    "check": "bun run lint && bun run fmt:check && bun run type:check && bun run test:ci"
+    "check": "bun run lint && bun run fmt:check && bun run type:check && bun run test:ci",
+    "fetch:planets": "bun run src/scripts/fetch-planets.ts"
   },
   "license": "MIT",
   "devDependencies": {
@@ -47,6 +48,5 @@
   "simple-git-hooks": {
     "pre-commit": "bun run fmt:check && bun run lint",
     "pre-push": "bun run check"
-  },
-  "fetch:planets": "bun run scripts/fetch-planets.ts"
+  }
 }

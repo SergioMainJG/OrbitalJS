@@ -1,7 +1,5 @@
 import { type Component, createMemo } from 'solid-js';
-import { bodies } from '@/features/simulation/stores/simulation-store';
-
-const initialEarth = { x: 1.0, y: 0.0 };
+import { bodies, EARTH_INITIAL_POS } from '@/features/simulation/stores/simulation-store';
 
 const CanvasOverlay: Component = () => {
   const finalEarth = createMemo(() => {
@@ -11,8 +9,8 @@ const CanvasOverlay: Component = () => {
   });
 
   const error = createMemo(() => {
-    const dx = finalEarth().x - initialEarth.x;
-    const dy = finalEarth().y - initialEarth.y;
+    const dx = finalEarth().x - EARTH_INITIAL_POS.x;
+    const dy = finalEarth().y - EARTH_INITIAL_POS.y;
     return Math.sqrt(dx * dx + dy * dy);
   });
 
