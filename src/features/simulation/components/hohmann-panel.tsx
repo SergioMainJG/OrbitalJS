@@ -186,7 +186,11 @@ export const HohmannPanel: Component = () => {
                 class="select select-bordered select-xs w-full border-slate-700 bg-slate-800 text-slate-300"
               >
                 <For each={availablePlanets()}>
-                  {(p) => <option value={p.name}>{p.name}</option>}
+                  {(p) => (
+                    <option value={p.name} selected={p.name === hohmannParams().origin}>
+                      {p.name}
+                    </option>
+                  )}
                 </For>
               </select>
             </div>
@@ -199,7 +203,11 @@ export const HohmannPanel: Component = () => {
                 class="select select-bordered select-xs w-full border-slate-700 bg-slate-800 text-slate-300"
               >
                 <For each={availablePlanets()}>
-                  {(p) => <option value={p.name}>{p.name}</option>}
+                  {(p) => (
+                    <option value={p.name} selected={p.name === hohmannParams().target}>
+                      {p.name}
+                    </option>
+                  )}
                 </For>
               </select>
             </div>
