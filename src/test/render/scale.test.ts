@@ -1,7 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { drawBodies, clearTrails } from "@/presentation/renderers/draw-bodies";
+import { DrawBodiesService } from "@/presentation/renderers/draw-bodies";
 import { CanvasRenderer } from "@/presentation/renderers/canvas-renderer";
 import type { BodyState } from "@/shared/types";
+
+const drawBodiesService = new DrawBodiesService();
+const drawBodies = drawBodiesService.draw.bind(drawBodiesService);
+const clearTrails = drawBodiesService.clearTrails.bind(drawBodiesService);
 
 function createTrackedCtx() {
   const fillStyleLog: string[] = [];

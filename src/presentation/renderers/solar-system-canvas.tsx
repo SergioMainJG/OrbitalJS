@@ -2,6 +2,7 @@ import { onMount, onCleanup, createEffect } from 'solid-js';
 import { CanvasRenderer } from './canvas-renderer';
 import { AnimationLoop } from '@/core/engines/animation-loop';
 import { PhysicsEngine, type IntegratorName } from '@/core/engines/physics-engine';
+import { rendererRegistry } from '@/application/registries/renderer-registry';
 import {
   bodies,
   setBodies,
@@ -185,6 +186,7 @@ function SolarSystemCanvas() {
 
     renderer = new CanvasRenderer(canvasRef, width, height, context, MAX_ORBIT_AU);
     renderer.initialize();
+    rendererRegistry.register('canvas', renderer);
 
     const scale = Math.min(width, height) / 2 / MAX_ORBIT_AU;
     launcher = new SpaceshipLauncher(canvasRef, context, scale, width / 2, height / 2, {

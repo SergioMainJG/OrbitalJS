@@ -5,11 +5,15 @@ import {
   setSimSpeed,
 } from "@/features/simulation/stores/simulation-store";
 import { getBodyColor, getBodyRadius } from "@/presentation/renderers/body-renderer";
-import { clearTrails } from "@/presentation/renderers/draw-bodies";
+import { rendererRegistry } from "@/application/registries/renderer-registry";
+import type { CanvasRenderer } from "@/presentation/renderers/canvas-renderer";
 import type { RenderBody } from "@/shared/types";
 
 export function loadScenario(scenario: SimulationScenario): void {
-  clearTrails();
+  const renderer = rendererRegistry.get("canvas") as CanvasRenderer | undefined;
+  if (renderer) {
+    renderer.clearTrails();
+  }
 
   const renderBodies: RenderBody[] = scenario.bodies.map((b) => ({
     ...b,
