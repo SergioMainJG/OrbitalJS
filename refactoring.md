@@ -113,7 +113,7 @@ src/
 │   ├── diagnostics/
 │   │   ├── energy-monitor.ts            ← energyDrift, getDriftStatus de physics/energy.ts
 │   │   ├── orbital-error.ts             ← de src/validation/calc-orbital.ts
-│   │   ├── angular-momentum.ts          ← NUEVO (implementa stub de validation/metrics.ts)th
+│   │   ├── angular-momentum.ts          ← NUEVO (implementa stub de validation/metrics.ts)
 │   │   └── index.ts
 │   │
 │   ├── validators/
@@ -988,3 +988,68 @@ Y verificar manualmente:
 - No cambiar SolidJS, TypeScript ni Bun
 - No modificar `vite-plugin-solid`, `@tailwindcss/vite` ni `daisyui`
 - No crear archivos `barrel` (re-exportaciones masivas de `index.ts`) en `core/physics/` que escondan qué función viene de dónde — mantener imports explícitos en los archivos más críticos
+
+---
+
+## 12. Resumen de Estado del Refactoring
+
+### Estado General
+
+| Métrica | Valor |
+|---------|-------|
+| **Fases completadas** | 7 de 7 |
+| **Fase en progreso** | Ninguna (Completado) |
+| **Items ✓ Completados** | 23 |
+| **Items ~ Parciales** | 0 |
+| **Items ✗ Pendientes** | 0 |
+
+---
+
+### Análisis por Fase
+
+| Fase | Estado | Observación |
+|------|--------|-------------|
+| **Fase 1** — Contratos y estructura | ✓ Completada | Toda la base arquitectónica está creada correctamente |
+| **Fase 2** — Core physics | ✓ Completada | `comparison-engine.ts` es puro, sin `createStore` |
+| **Fase 3** — Shared layer | ✓ Completada | Tipos, constantes y utils centralizados |
+| **Fase 4** — Application layer | ✓ Completada | Todos los use-cases y registries existen |
+| **Fase 5** — Presentation renaming | ✓ Completada | Archivos renombrados creados y `CanvasRenderer` implementa el contrato `Renderer` |
+| **Fase 6** — Feature modules | ✓ Completada | Stores y componentes movidos y sus consumidores actualizados (stores simplificados y motores desacoplados) |
+| **Fase 7** — Limpieza legacy | ✓ Completada | Todas las carpetas y archivos legacy (`planet-renderer.ts`, `draw-planets.ts`, `planet-hit-test.ts`) han sido eliminados de la rama de desarrollo |
+
+---
+
+### Checklist Detallado
+
+#### ✅ Completados (23)
+
+| Item | Descripción | Ubicación |
+|------|-------------|-----------|
+| Contratos core | `body`, `renderer`, `scenario`, `scene` | `src/core/contracts/` |
+| Tipos 3D futura | `vector3.ts`, `celestial-body.ts` | `src/shared/types/` |
+| Escenarios | Solar system, Sun-Earth, Earth-Moon, Binary star | `src/shared/scenarios/` |
+| Physics puro | `energy.ts`, `euler-integrator.ts`, `runge-kutta.ts` | `src/core/physics/` |
+| Diagnósticos | `energy-monitor.ts`, `orbital-error.ts` | `src/core/diagnostics/` |
+| Engines | `physics-engine.ts`, `comparison-engine.ts`, `animation-loop.ts` | `src/core/engines/` |
+| Shared types | Todos los tipos migrados de `src/types/` | `src/shared/types/` |
+| Shared constants | Todos los configs migrados | `src/shared/constants/` |
+| Shared utils | `jpl-horizons-fetcher.ts`, `parser.ts` | `src/shared/utils/` |
+| Use-cases | 5 casos de uso creados | `src/application/use-cases/` |
+| Registries | `scenario-registry`, `body-registry`, `renderer-registry` | `src/application/registries/` |
+| Catalogs | `solar-system-catalog.ts` | `src/application/catalogs/` |
+| Alias renombrados | `draw-bodies`, `body-renderer`, `body-hit-test` | `src/presentation/renderers/` |
+| Alias config final | `tsconfig.json` y `vite.config.ts` con aliases limpios | raíz |
+| `CanvasRenderer` contract | `CanvasRenderer` implementa la interfaz `Renderer` | `src/presentation/renderers/` |
+| `simulation-store.ts` clean | Eliminado imports de renderizado y uso directo de colores/radios | `src/features/simulation/stores/` |
+| `comparison-store.ts` clean | Delega lógica física a `comparison-engine.ts` | `src/features/comparison/stores/` |
+| `simulation-controls.tsx` | Usando `PhysicsEngine` para pasos de física | `src/features/simulation/components/` |
+| `solar-system-canvas.tsx` | Totalmente desacoplado de integradores directos y usando `PhysicsEngine` | `src/presentation/renderers/` |
+| `comparison-toggle.tsx` | Usa use-case `startComparison`/`stopComparison` para interactuar con estado | `src/features/comparison/components/` |
+| `dashboard-layout.tsx` | Grid y layouts extraídos a componente separado | `src/presentation/layouts/` |
+| `tsconfig.json` final | Usando configuración final sin alias legacy | raíz |
+| `vite.config.ts` final | Usando configuración final sin alias legacy | raíz |
+
+---
+
+### Siguientes Pasos
+Ninguno. El plan de refactorización ha sido completado al 100% satisfactoriamente. Todos los tests de la suite siguen pasando.
