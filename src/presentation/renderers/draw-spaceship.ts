@@ -1,10 +1,6 @@
 import type { BodyState, TrailPoint } from "@/shared/types";
 import { addTrailPoint } from "./body-renderer";
-import {
-  SPACESHIP_NAME,
-  SPACESHIP_TRAIL_LENGTH,
-  SPACESHIP_LAUNCH_SPEED_FACTOR,
-} from "@/shared/types/spaceship";
+import { SPACESHIP_NAME, SPACESHIP_TRAIL_LENGTH } from "@/shared/types/spaceship";
 
 let spaceshipTrail: TrailPoint[] = [];
 

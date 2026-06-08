@@ -2,6 +2,7 @@ import type { SimulationScenario } from "@/core/contracts/scenario.contract";
 import {
   setBodies,
   setCurrentDay,
+  setMaxOrbitAU,
   setSimSpeed,
 } from "@/features/simulation/stores/simulation-store";
 import { getBodyColor, getBodyRadius } from "@/presentation/renderers/body-renderer";
@@ -15,6 +16,7 @@ export function loadScenario(scenario: SimulationScenario): void {
     renderer.clearTrails();
     if (scenario.maxOrbitAU !== undefined) {
       renderer.setMaxOrbitAU(scenario.maxOrbitAU);
+      setMaxOrbitAU(scenario.maxOrbitAU);
     }
   }
 

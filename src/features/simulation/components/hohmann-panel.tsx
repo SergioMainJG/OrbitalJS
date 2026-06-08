@@ -20,9 +20,7 @@ export const HohmannPanel: Component = () => {
 
   const availablePlanets = createMemo(
     () => {
-      return bodies().filter(
-        (b) => b.name !== 'Sun' && b.name !== SPACESHIP_NAME && b.name !== 'Moon'
-      );
+      return bodies().filter((b) => b.name !== 'Sun' && b.name !== SPACESHIP_NAME);
     },
     [],
     {

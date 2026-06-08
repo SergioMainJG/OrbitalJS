@@ -42,7 +42,6 @@ export const BODY_COLLISION_RADII_AU: Record<string, number> = {
 
 const G_AU_DAY = (4 * Math.PI * Math.PI) / (365.25 * 365.25);
 
-
 /**
  * Convierte el vector de drag en canvas (px) a velocidad inicial en AU/día.
  */
@@ -51,9 +50,7 @@ export function dragToVelocity(
   scale: number,
   launchPosAU?: { x: number; y: number },
 ): { vx: number; vy: number } {
-  const r = launchPosAU
-    ? Math.sqrt(launchPosAU.x ** 2 + launchPosAU.y ** 2)
-    : 1.0;
+  const r = launchPosAU ? Math.sqrt(launchPosAU.x ** 2 + launchPosAU.y ** 2) : 1.0;
   const rClamped = Math.max(r, 0.1);
   const vOrbital = Math.sqrt(G_AU_DAY / rClamped);
   const sensitivity = 0.015;

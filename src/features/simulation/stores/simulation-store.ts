@@ -2,7 +2,8 @@ import { createSignal } from "solid-js";
 import type { RenderBody } from "@/shared/types";
 import { SOLAR_SYSTEM_SCENARIO } from "@/shared/scenarios/solar-system.scenario";
 
-// Default MAX_ORBIT_AU set to 2.0 to center on inner solar system (Mercury to Mars)
+const [maxOrbitAU, setMaxOrbitAU] = createSignal(2.0);
+export { maxOrbitAU, setMaxOrbitAU };
 export const MAX_ORBIT_AU = 2.0;
 
 // Scenario bodies without rendering properties — these are injected by loadScenario use-case
