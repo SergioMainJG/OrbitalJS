@@ -12,18 +12,18 @@ import Tooltip from '@/presentation/shared-components/tooltip';
 const DashboardLayout: Component = () => {
   return (
     <>
-      <div class="dashboard-grid">
-        <div class="panel-left flex flex-col gap-2 overflow-hidden">
+      <div class="flex h-auto min-h-screen w-full flex-col gap-3 overflow-y-auto bg-[#0a0a1a] p-3 lg:grid lg:h-screen lg:grid-cols-[260px_1fr_300px] lg:grid-rows-[1fr_140px] lg:gap-2 lg:overflow-hidden lg:p-2">
+        <div class="flex h-auto w-full flex-col gap-2 overflow-visible lg:col-start-1 lg:row-start-1 lg:row-end-3 lg:h-full lg:overflow-hidden">
           <LeftPanel />
         </div>
 
-        <div class="panel-center relative flex flex-col overflow-hidden rounded-xl border border-slate-800 bg-[#0a0a2a]">
+        <div class="relative flex h-[55vh] min-h-[380px] w-full flex-col overflow-hidden rounded-xl border border-slate-800 bg-[#0a0a2a] lg:col-start-2 lg:row-start-1 lg:h-full">
           <CanvasOverlay />
           <SolarSystemCanvas />
           <ComparisonOverlay />
         </div>
 
-        <div class="panel-right flex flex-col gap-2 overflow-hidden">
+        <div class="flex h-auto w-full flex-col gap-2 overflow-visible lg:col-start-3 lg:row-start-1 lg:row-end-3 lg:h-full lg:overflow-hidden">
           <ValidationPanel />
           <ChartsPanel />
           <LegendPanel />

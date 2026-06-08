@@ -31,7 +31,6 @@ export class Camera {
   zoom(factor: number, mouseX?: number, mouseY?: number): void {
     const oldScale = this.scale;
     this.scale *= factor;
-    // Limit scale to a reasonable range
     this.scale = Math.max(0.5, Math.min(100000, this.scale));
 
     if (mouseX !== undefined && mouseY !== undefined) {

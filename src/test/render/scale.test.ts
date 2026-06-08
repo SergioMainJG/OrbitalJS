@@ -97,7 +97,7 @@ describe("drawPlanets", () => {
   beforeEach(() => clearTrails());
 
   describe("AC1 – Logarithmic radius per planet", () => {
-    it("calls arc() once for each non-Sun body (one circle per planet)", () => {
+    it("calls arc() once for each non-Sun body", () => {
       const { ctx, arc } = createTrackedCtx();
       drawBodies(ctx, [EARTH, MARS], 100, 400, 300);
       expect(arc).toHaveBeenCalledTimes(2);
@@ -151,7 +151,7 @@ describe("drawPlanets", () => {
       expect(stroke.mock.calls.length).toBeGreaterThanOrEqual(2);
     });
 
-    it("trail opacity gradient increments with each segment (strokeStyle assigned per segment)", () => {
+    it("trail opacity gradient increments with each segment", () => {
       const { ctx, stroke } = createTrackedCtx();
       for (let i = 0; i < 5; i++) drawBodies(ctx, [EARTH], 100, 400 + i, 300);
       expect(stroke.mock.calls.length).toBeGreaterThanOrEqual(4);
@@ -261,7 +261,7 @@ describe("CanvasRenderer", () => {
     expect((ctx.arc as ReturnType<typeof vi.fn>).mock.calls.length).toBeGreaterThanOrEqual(2);
   });
 
-  it("render() calls clear() before drawing bodies (drawImage fires each render)", () => {
+  it("render() calls clear() before drawing bodies", () => {
     const renderer = new CanvasRenderer(canvas, 800, 600, ctx);
     renderer.initialize();
     (ctx.drawImage as ReturnType<typeof vi.fn>).mockClear();

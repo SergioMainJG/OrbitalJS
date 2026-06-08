@@ -1,14 +1,7 @@
 import type { BodyState } from "./body-state.interface";
 
-// ---------------------------------------------------------------------------
-// Estado del lanzador (máquina de estados simple)
-// ---------------------------------------------------------------------------
-
 /** Fase del gesto de lanzamiento */
-export type LaunchPhase =
-  | "idle" // sin interacción
-  | "aiming" // mousedown presionado, arrastrando para definir velocidad
-  | "launched"; // nave en vuelo, integrada por RK4
+export type LaunchPhase = "idle" | "aiming" | "launched";
 
 export interface LaunchState {
   phase: LaunchPhase;
@@ -17,10 +10,6 @@ export interface LaunchState {
   /** Posición actual del mouse en canvas (px) mientras arrastra */
   currentCanvas: { x: number; y: number } | null;
 }
-
-// ---------------------------------------------------------------------------
-// Nave en vuelo
-// ---------------------------------------------------------------------------
 
 /** Masa de la nave — insignificante frente a los planetas (en M☉) */
 export const SPACESHIP_MASS = 1e-25;
@@ -41,8 +30,7 @@ export const SPACESHIP_LAUNCH_SPEED_FACTOR = 0.05;
 export const SPACESHIP_COLLISION_RADIUS_AU = 0.01;
 
 /**
- * BUG-5 fix: collision radii in AU per body name, consistent with visual radii.
- * Replaces the broken `bodyRadiusAU = SPACESHIP_COLLISION_RADIUS_AU + body.mass * 1e-26` formula.
+ * Collision radii in AU per body name, consistent with visual radii.
  */
 export const BODY_COLLISION_RADII_AU: Record<string, number> = {
   Sun: 0.05,

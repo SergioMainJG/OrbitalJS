@@ -13,8 +13,6 @@ export class DrawBodiesService {
   ): void {
     for (const body of bodies) {
       const px = cx + body.x * scale;
-      // BUG FIX: Y must be inverted because simulation Y↑ but canvas Y↓
-      // Previously was cy + body.y * scale which mirrored orbits below centre
       const py = cy - body.y * scale;
 
       const current = this.trails.get(body.name) ?? [];
@@ -25,7 +23,6 @@ export class DrawBodiesService {
       const radius = getBodyRadius(body.mass);
       const displayRadius = body.name === "Sun" ? radius * 0.3 : radius;
 
-      // Trail degradado
       for (let i = 1; i < updated.length; i++) {
         const opacity = i / updated.length;
         ctx.beginPath();
@@ -38,7 +35,6 @@ export class DrawBodiesService {
         ctx.stroke();
       }
 
-      // Glow para el Sol
       if (body.name === "Sun") {
         const glowRadius = displayRadius * 2;
         const glow = ctx.createRadialGradient(px, py, 0, px, py, glowRadius);
@@ -50,11 +46,9 @@ export class DrawBodiesService {
         ctx.fill();
       }
 
-      // Sombra sutil
       ctx.shadowColor = color;
       ctx.shadowBlur = body.name === "Sun" ? 10 : 3;
 
-      // Círculo del planeta
       ctx.beginPath();
       ctx.arc(px, py, displayRadius, 0, Math.PI * 2);
       ctx.fillStyle = color;
@@ -62,7 +56,6 @@ export class DrawBodiesService {
 
       ctx.shadowBlur = 0;
 
-      // Label
       ctx.fillStyle = "#ffffff";
       ctx.font = "11px monospace";
       ctx.fillText(body.name, px + displayRadius + 3, py - displayRadius);

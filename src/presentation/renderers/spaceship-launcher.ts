@@ -1,13 +1,3 @@
-/**
- * spaceship-launcher.ts
- *
- * Maneja los eventos de mouse sobre el canvas para el lanzador de naves.
- * Implementa la máquina de estados: idle → aiming → launched.
- *
- * BUG FIX: Added public reset() method so the Reset button can clear launch state,
- * allowing a new spaceship to be launched after reset without a full page reload.
- */
-
 import type { BodyState } from "@/shared/types";
 import {
   type LaunchState,
@@ -19,27 +9,15 @@ import {
 } from "@/shared/types/spaceship";
 import { drawVelocityArrow, drawImpactMessage, clearSpaceshipTrail } from "./draw-spaceship";
 
-// ---------------------------------------------------------------------------
-// Tipos de callbacks
-// ---------------------------------------------------------------------------
-
 type OnLaunchCallback = (spaceship: BodyState) => void;
 type OnCancelCallback = () => void;
 type OnImpactCallback = (bodyName: string) => void;
-
-// ---------------------------------------------------------------------------
-// Estado interno del impacto (fade out del mensaje)
-// ---------------------------------------------------------------------------
 
 interface ImpactFade {
   px: number;
   py: number;
   alpha: number;
 }
-
-// ---------------------------------------------------------------------------
-// Clase principal
-// ---------------------------------------------------------------------------
 
 export class SpaceshipLauncher {
   private canvas: HTMLCanvasElement;
@@ -97,10 +75,6 @@ export class SpaceshipLauncher {
     this.setCursor("crosshair");
   }
 
-  // ---------------------------------------------------------------------------
-  // API pública
-  // ---------------------------------------------------------------------------
-
   updateTransform(scale: number, cx: number, cy: number): void {
     this.scale = scale;
     this.cx = cx;
@@ -150,7 +124,6 @@ export class SpaceshipLauncher {
         };
 
         this.impactFade = { ...impactPx, alpha: 1 };
-        // BUG FIX: reset to idle so a new ship can be launched immediately
         this.launchState = { phase: "idle", originCanvas: null, currentCanvas: null };
         clearSpaceshipTrail();
 
@@ -170,7 +143,7 @@ export class SpaceshipLauncher {
   }
 
   /**
-   * BUG FIX: Full reset — clears launch state, impact fade, and trail.
+   * Full reset — clears launch state, impact fade, and trail.
    * Called by the Reset button in SimulationControls so users can
    * launch a new spaceship without reloading the page.
    */
@@ -189,14 +162,8 @@ export class SpaceshipLauncher {
     this.setCursor("default");
   }
 
-  // ---------------------------------------------------------------------------
-  // Handlers de eventos
-  // ---------------------------------------------------------------------------
-
   private onMouseDown(e: MouseEvent): void {
     if (e.button !== 0) return;
-    // BUG FIX: allow launching when idle OR after a previous launch ended
-    // Previously "launched" phase permanently blocked new launches
     if (this.launchState.phase === "aiming") return;
 
     const pos = this.getCanvasPos(e);
@@ -236,8 +203,6 @@ export class SpaceshipLauncher {
     const velAUDay = dragToVelocity({ dx, dy }, this.scale);
     const spaceship = createSpaceshipBody(posAU, velAUDay);
 
-    // BUG FIX: transition back to idle (not "launched") so another ship
-    // can be queued once the current one impacts or user resets
     this.launchState = { phase: "launched", originCanvas: null, currentCanvas: null };
     this.onLaunch(spaceship);
   }
@@ -254,10 +219,6 @@ export class SpaceshipLauncher {
       this.cancel();
     }
   }
-
-  // ---------------------------------------------------------------------------
-  // Helpers
-  // ---------------------------------------------------------------------------
 
   private attachEvents(): void {
     this.canvas.addEventListener("mousedown", this.handleMouseDown);

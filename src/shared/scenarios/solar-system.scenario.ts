@@ -22,10 +22,8 @@ export const SOLAR_SYSTEM_SCENARIO: SimulationScenario = {
   description: "Sol + 8 planetas + Plutón en condiciones iniciales circulares J2000",
   maxOrbitAU: 40,
   bodies: [
-    // ── Sol ─────────────────────────────────────────────────────────────────
     { name: "Sun", mass: 1, x: 0, y: 0, vx: 0, vy: 0 },
 
-    // ── Planetas interiores ──────────────────────────────────────────────────
     {
       name: "Mercury",
       mass: 1.66e-7,
@@ -59,7 +57,6 @@ export const SOLAR_SYSTEM_SCENARIO: SimulationScenario = {
       vy: vCirc(1.524),
     },
 
-    // ── Planetas exteriores ──────────────────────────────────────────────────
     {
       name: "Jupiter",
       // 1 Jupiter mass = 9.543e-4 M☉
@@ -97,7 +94,6 @@ export const SOLAR_SYSTEM_SCENARIO: SimulationScenario = {
       vy: vCirc(30.069),
     },
 
-    // ── Plutón (planeta enano) ───────────────────────────────────────────────
     {
       name: "Pluto",
       // 1 Pluto mass = 6.58e-9 M☉

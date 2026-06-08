@@ -26,8 +26,6 @@ const SimulationControls: Component = () => {
     setIsRunning(false);
     loadScenario(SOLAR_SYSTEM_SCENARIO);
 
-    // BUG FIX: reset spaceship launcher state so a new ship can be launched.
-    // We access the launcher via the canvas element where it was attached.
     const canvas = document.querySelector('canvas') as
       | (HTMLCanvasElement & {
           launcherInstance?: SpaceshipLauncher;
@@ -37,10 +35,8 @@ const SimulationControls: Component = () => {
       canvas.launcherInstance.reset();
     }
 
-    // Remove any existing spaceship from bodies
     setBodies((prev) => prev.filter((b) => b.name !== SPACESHIP_NAME));
 
-    // BUG FIX: also reset comparison state so energy monitor starts fresh
     resetComparison();
 
     setTimeout(() => setIsRunning(true), 50);
@@ -62,7 +58,6 @@ const SimulationControls: Component = () => {
 
   return (
     <div class="flex flex-col gap-4 p-2">
-      {/* Play/Pause */}
       <div class="flex gap-2">
         <button
           onClick={() => {
@@ -88,7 +83,6 @@ const SimulationControls: Component = () => {
           )}
         </button>
 
-        {/* Step forward */}
         <button
           onClick={handleStep}
           class="flex items-center justify-center rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white hover:bg-slate-700"
@@ -101,7 +95,6 @@ const SimulationControls: Component = () => {
         </button>
       </div>
 
-      {/* Velocidad */}
       <div class="flex flex-col gap-1">
         <span class="text-[10px] font-semibold tracking-widest text-slate-400 uppercase">
           Velocidad: {simSpeed()}x
@@ -125,7 +118,6 @@ const SimulationControls: Component = () => {
         </div>
       </div>
 
-      {/* Toggle Integrador Euler/RK4 */}
       <div class="flex flex-col gap-1">
         <span class="text-[10px] font-semibold tracking-widest text-slate-400 uppercase">
           Integrador
@@ -146,7 +138,6 @@ const SimulationControls: Component = () => {
         </div>
       </div>
 
-      {/* Reset */}
       <button
         onClick={handleReset}
         class="flex items-center justify-center gap-2 rounded-lg border border-red-800 bg-red-950 px-3 py-2 text-sm text-red-400 hover:bg-red-900"

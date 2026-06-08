@@ -41,9 +41,6 @@ function buildScene(allBodies: RenderBody[], timeStep: number, elapsed: number):
   };
 }
 
-// ---------------------------------------------------------------------------
-// BUG FIX: Draw comparison trails directly on canvas
-// ---------------------------------------------------------------------------
 function drawComparisonTrails(
   ctx: CanvasRenderingContext2D,
   scale: number,
@@ -140,9 +137,6 @@ function SolarSystemCanvas() {
     const currentIntegrator = integrator() as IntegratorName;
     physicsEngine.setIntegrator(currentIntegrator);
 
-    // BUG FIX: Clamp the effective simulation timestep per integrator.
-    // At simSpeed=10x, dt*simSpeed = 5 days which is fine for RK4 but
-    // catastrophically unstable for Euler (planets shoot off to infinity).
     const rawDt = dt() * simSpeed();
     const maxDt = currentIntegrator === 'Euler' ? MAX_DT_EULER : MAX_DT_RK4;
     const simDt = Math.min(rawDt, maxDt);
@@ -155,7 +149,6 @@ function SolarSystemCanvas() {
     setCurrentDay((d) => d + simDt);
 
     if (isComparing()) {
-      // Use the same clamped dt for the comparison engine
       tickComparison(Math.min(rawDt, MAX_DT_EULER));
     }
 
@@ -179,12 +172,10 @@ function SolarSystemCanvas() {
 
     renderer.render(buildScene(bodies(), dt(), currentDay()));
 
-    // BUG FIX: draw comparison trails on every frame when active
     if (isComparing()) {
       drawComparisonTrails(ctx, scale, cx, cy);
     }
 
-    // Draw Earth initial position (INICIO green marker) directly on canvas
     const earthInitialX = EARTH_INITIAL_POS.x;
     const earthInitialY = EARTH_INITIAL_POS.y;
     const initialPx = cx + earthInitialX * scale;
@@ -345,7 +336,6 @@ function SolarSystemCanvas() {
       },
     });
 
-    // BUG FIX: attach launcher to canvas element so SimulationControls can reset it
     (canvasRef as HTMLCanvasElement & { launcherInstance?: SpaceshipLauncher }).launcherInstance =
       launcher;
 
@@ -456,7 +446,6 @@ function SolarSystemCanvas() {
         class="block h-full w-full"
       />
 
-      {/* Floating Zoom and Reset Controls */}
       <div class="absolute right-3 bottom-3 z-10 flex flex-col gap-1 rounded-lg border border-slate-800 bg-slate-950/80 p-1 shadow-lg backdrop-blur-md">
         <button
           onClick={() => handleZoomButton(1.3)}

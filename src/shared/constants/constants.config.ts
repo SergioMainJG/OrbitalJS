@@ -6,7 +6,7 @@ export const UNIVERSAL_CONSTS = {
   /** Gravitational constant in AU^3 / (M☉ · day^2) */
   G: (4 * Math.PI * Math.PI) / (365.25 * 365.25),
   /**
-   * BUG FIX: Maximum effective dt for Euler integration.
+   * Maximum effective dt for Euler integration.
    * Euler becomes numerically unstable above ~1 day step for a 1 AU orbit.
    * We cap the effective step to prevent planet blow-up at high sim speeds.
    * RK4 is stable up to ~5 days, so we apply a softer cap there.

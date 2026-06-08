@@ -54,54 +54,108 @@ bun run dev       # http://localhost:3000
 
 ## Estructura del proyecto
 
+El proyecto ha sido refactorizado siguiendo una arquitectura limpia y modular dividida en capas desacopladas, lo que facilita la escalabilidad y las pruebas del simulador:
+
 ```sh
 .
 ├── .github/
 │   └── workflows/
-│       └── ci.yml              # Pipeline: lint a fmt a tipos a tests a build
-├── .vscode/
-│   ├── extensions.json         # Extensiones recomendadas (instálalas todas)
-│   └── settings.json           # Configuración del editor para este proyecto
+│       └── ci.yml              # Pipeline: lint -> fmt -> tipos -> tests -> build
 ├── public/
 │   └── data/
-│       └── planets.json        # Datos orbitales reales (NASA/JPL Horizons)
+│       └── planets.json        # Datos orbitales reales pre-generados
 ├── src/
-│   ├── constants/              # Constantes físicas y de configuración
-│   ├── physics/                # Motor de simulación (pura lógica, sin UI)
-│   ├── render/                 # Todo lo relacionado con Canvas 2D
-│   ├── state/                  # Estado global de la aplicación (Solid stores)
-│   ├── types/                  # Tipos TypeScript compartidos entre módulos
-│   ├── ui/                     # Componentes de SolidJS
-│   ├── utils/                  # Funciones utilitarias puras (sin estado, sin UI)
-│   ├── test/
-│   │   └── setup.ts            # Configuración global de Vitest (@testing-library/jest-dom)
-│   ├── OrbitalJS.tsx           # Componente raíz (monta canvas + UI)
-│   ├── index.css               # Estilos globales + directivas Tailwind v4
-│   └── index.tsx               # Entry point (renderiza OrbitalJS en #root)
-├── .gitattributes              # Normalización de line endings (LF en todos los OS)
-├── .gitignore
-├── .oxfmtrc.json               # Configuración del formatter oxfmt
-├── .oxlintrc.json              # Reglas del linter oxlint
-├── .prettierrc                 # Configuración de Prettier (.tsx, .html, .css)
-├── bun.lock                    # Lockfile de dependencias (no editar a mano)
-├── index.html                  # Entrada HTML de Vite
-├── package.json
+│   ├── core/                   # Capa de Dominio pura (física y lógica matemática sin frameworks)
+│   │   ├── contracts/          # Contratos e interfaces base (Renderer, Scene, Scenario)
+│   │   ├── diagnostics/        # Monitores de error y deriva de energía (orbitalError, energyDrift)
+│   │   ├── engines/            # Motores puros de animación, comparación y paso de física
+│   │   ├── physics/            # Integradores numéricos (RK4, Euler) y fórmulas de energía
+│   │   └── validators/         # Validación física de órbitas cerradas
+│   ├── application/            # Casos de uso de negocio y orquestación
+│   │   ├── catalogs/           # Catálogos de escenarios celestes
+│   │   ├── registries/         # Registros para inyección de dependencias (rendererRegistry)
+│   │   ├── services/           # Servicios externos (JPL Horizons service facade)
+│   │   └── use-cases/          # Casos de uso puros (loadScenario, compareIntegrators)
+│   ├── features/               # Características funcionales empaquetadas (SolidJS logic + component UI)
+│   │   ├── comparison/         # Módulo de comparación e interacción Euler vs RK4
+│   │   ├── simulation/         # Controles de simulación, stores de estado reactivo y overlays
+│   │   └── theory/             # Panel teórico "Cómo funciona"
+│   ├── presentation/           # Capa de presentación visual e interfaces de usuario
+│   │   ├── layouts/            # Estructuras de rejilla base y paneles del dashboard
+│   │   ├── renderers/          # Dibujado 2D en Canvas (CanvasRenderer, Camera, DrawBodies, Launcher)
+│   │   └── shared-components/  # Componentes transversales (legend-panel, tooltip, simulation-log)
+│   ├── shared/                 # Recursos y utilidades compartidas y transversales
+│   │   ├── constants/          # Constantes físicas y configuraciones globales de estilo
+│   │   ├── types/              # Definición de tipos TypeScript compartidos
+│   │   └── utils/              # Clases utilitarias (JPL fetcher/parser)
+│   ├── index.css               # Estilos globales y Tailwind CSS v4
+│   └── index.tsx               # Punto de entrada de la aplicación
 ├── tsconfig.json
 └── vite.config.ts
 ```
 
-## Convenciones del equipo
+### Cambios Arquitectónicos (Clean Architecture)
 
-### Nombres de archivos
+El simulador se ha estructurado bajo los principios de **Arquitectura Limpia (Clean Architecture)** con el fin de independizar la lógica física y matemática de la interfaz gráfica y de cualquier framework reactivo. Esto garantiza la testabilidad y la mantenibilidad a largo plazo mediante las siguientes capas desacopladas:
 
-- `kebab-case` para todos los archivos. Ejemplo: `rk4-integrator.ts`, `energy-panel.tsx`
-- Componentes SolidJS también en kebab-case. Ejemplo: `orbit-canvas.tsx` (no `OrbitCanvas.tsx`)
+1. **Capa de Dominio / Core (`src/core/`)**:
+   * **Física y Lógica Matemática Pura**: Contiene las ecuaciones de movimiento e integradores numéricos (como Runge-Kutta de 4.º orden y Euler en `core/physics/`), cálculo de diagnósticos orbitales (como deriva de energía mecánica y momento angular en `core/diagnostics/`) y validación física de órbitas cerradas en `core/validators/`.
+   * **Independencia del Framework**: Esta capa es 100% JS/TS puro. No tiene noción alguna de SolidJS, señales, estados reactivos ni elementos del DOM. Permite ejecutar simulaciones y test unitarios de forma rápida y aislada.
+   * **Contratos y Abstracciones (`core/contracts/`)**: Define interfaces estrictas como `Renderer`, `Scene` y `Scenario`. Cualquier motor de renderizado o escena celeste debe cumplir estos contratos.
 
-### TypeScript
+2. **Capa de Aplicación (`src/application/`)**:
+   * **Casos de Uso (`application/use-cases/`)**: Orquestan el flujo de datos e interacciones del negocio (por ejemplo, cargar un escenario planetario (`loadScenario`) o comparar la estabilidad de los integradores (`compareIntegrators`)).
+   * **Registros e Inyección de Dependencias (`application/registries/`)**: Se utiliza el patrón Registry (ej. `rendererRegistry`) para registrar implementaciones concretas de contratos sin acoplar directamente el core con la presentación.
+   * **Servicios de Fachada (`application/services/`)**: Definen la comunicación con fuentes externas, como la obtención de efemérides de la NASA (JPL Horizons).
 
-- **Prohibido `any`**: usa `unknown` si no sabes el tipo, luego narrowing con guards
-- **Imports de tipos separados**: `import type { Planet } from '~/types'`
-- **Sin `// @ts-ignore`**: usa `// @ts-expect-error` con descripción de por qué
+3. **Capa de Características / Features (`src/features/`)**:
+   * **Módulos Funcionales Autocontenidos**: Agrupa la interfaz de usuario en SolidJS con sus respectivos stores de estado reactivo locales (ej. `simulation-store.ts`, `comparison-store.ts`).
+   * **Flujo Unidireccional de Dependencias**: Los componentes y stores consumen los casos de uso expuestos por la capa de aplicación, evitando mutaciones directas y acoplamientos innecesarios.
+
+4. **Capa de Presentación (`src/presentation/`)**:
+   * **Motores de Renderizado (`presentation/renderers/`)**: Implementaciones visuales concretas. `CanvasRenderer` dibuja en un elemento Canvas 2D utilizando el sistema de proyección de cámara (`camera.ts`), dibujado de cuerpos (`draw-bodies.ts`) e interfaces de lanzamiento de naves (`spaceship-launcher.ts`). Cumplen estrictamente con el contrato `Renderer`, permitiendo en el futuro una migración a 3D (WebGL o Three.js) sin alterar la lógica de negocio ni el core del simulador.
+   * **Estructura y Componentes Compartidos**: Contiene los layouts responsivos del panel de control (`layouts/`) y los elementos reutilizables de UI (`shared-components/` como el registro de simulación `simulation-log`).
+
+5. **Capa Compartida / Shared (`src/shared/`)**:
+   * Alberga recursos transversales sin lógica de negocio, tales como constantes físicas y cosmológicas reales (ej. constante de gravitación universal escalada, límites de paso temporal $dt$, colores del simulador en `shared/constants/`), tipos comunes en TypeScript (`shared/types/`) y funciones auxiliares útiles (`shared/utils/`).
+
+---
+
+## Convenciones de Código y del Equipo
+
+### Convenciones en el Código
+
+Para mantener una base de código coherente, legible y libre de errores comunes, todo el equipo debe seguir rigurosamente las siguientes convenciones:
+
+#### 1. Nomenclatura de Archivos (Kebab-Case)
+* Todos los archivos y directorios del proyecto deben usar únicamente letras minúsculas y guiones como separadores (`kebab-case`). Esto aplica sin excepción a:
+  * Componentes SolidJS (ej. `simulation-log.tsx`).
+  * Archivos de estado/stores (ej. `simulation-store.ts`).
+  * Utilidades, configuraciones y tests (ej. `constants.config.ts`, `scale.test.ts`).
+
+#### 2. Tipado Estricto de TypeScript
+* **Prohibición de `any`**: Está prohibido declarar variables o firmas de función utilizando el tipo `any`. Si el tipo es verdaderamente desconocido, debe usarse `unknown` junto con type guards o estrechamiento de tipos (*type narrowing*).
+* **Importaciones de Tipos**: Las importaciones que solo involucren tipos TypeScript deben realizarse de forma explícita utilizando el modificador `import type` (ej. `import type { AstronomicalBody } from '@/shared/types'`).
+* **Directivas de Compilación**: Se debe evitar el uso de `@ts-ignore`. En su lugar, se usará exclusivamente `@ts-expect-error` para indicar al compilador que se espera un error de tipos controlado, describiendo siempre el motivo del error inmediatamente al lado de la directiva.
+
+#### 3. Prohibición de Guiones Bajos Iniciales o Finales
+* Para garantizar la conformidad con las reglas de estilo globales de linters y formateadores, no se permite el uso de variables con guiones bajos iniciales o finales (dangling underscores) como `__launcher` o `_private`. Todas las variables internas o privadas en clases y módulos deben emplear un estilo claro en `camelCase` (ej. `launcherInstance`, `privateMethod`).
+
+#### 4. Consumo Secuencial y Control de Tasa (Rate Limiting) en APIs
+* Al consumir la API JPL Horizons de la NASA, las llamadas HTTP deben ejecutarse **estrictamente de forma secuencial** en un bucle (`for ... of`) empleando retardos artificiales explícitos (`await setTimeout`).
+* Queda terminantemente prohibido el uso de `Promise.all` o llamadas en paralelo en este servicio para evitar la saturación de peticiones y subsecuentes bloqueos de dirección IP (baneos). Se debe añadir la regla `eslint-disable-next-line no-await-in-loop` únicamente sobre este flujo controlado.
+
+#### 5. Política de Comentarios Limpios
+* **Eliminación de Comentarios Redundantes**: Se deben remover todos los comentarios inline que expliquen el flujo de control obvio, anotaciones temporales de bugs ya resueltos o separadores estructurales de código.
+* **Comentarios Permitidos**:
+  * **Documentación TSDoc/JSDoc**: Obligatoria en clases, interfaces y funciones públicas para detallar su propósito, parámetros y tipos de retorno.
+  * **Constantes Cosmólogicas/Físicas**: Todo valor numérico fijo o constante de configuración de física (como la masa de la nave, gravedad escalada, límites de paso de tiempo) debe ir acompañado de un comentario descriptivo y riguroso que justifique su valor y necesidad física.
+
+#### 6. Convenciones de Diseño y Layout Responsivo
+* El dashboard debe ser completamente responsive y adaptarse dinámicamente a todo tipo de pantallas mediante clases de utilidad de **Tailwind CSS** y componentes de **DaisyUI**:
+  * **Diseño Desktop ($\ge 1024$px)**: Se organiza en una estructura de 3 columnas fijas (panel de control a la izquierda, canvas en el centro, y panel de gráficos e histórico a la derecha).
+  * **Diseño Mobile/Tablet ($< 1024$px)**: Cambia automáticamente a una disposición de una sola columna vertical apilada.
+  * **Control de Scroll**: En resoluciones de escritorio, el scroll de la página completa está deshabilitado (`overflow: hidden`). Al cruzar el umbral responsivo de $1024$px, el layout de la app debe permitir el scroll vertical de la ventana raíz (`overflow-y: auto`), manteniendo los componentes internos (como el gráfico de energía o el log de simulación) adaptables en altura, con áreas internas de scroll específicas para que nunca colapsen o trunquen información.
 
 ### Commits
 
@@ -167,7 +221,7 @@ npm run dev
 
 ## Aclaración sobre posible error en `vite.config.ts`
 
-Se está usando [rolldown](https://rolldown.rs) en vez de [rollup](https://rollupjs.org), el nuevo motor que vite que
+Se está usando [rolldown](https://rolldown.rs) en vez de [rollup](https://rollupjs.org) a través de `rolldown-vite`. Este es el nuevo motor de empaquetado ultra rápido escrito en Rust que Vite adoptará en el futuro. Puede generar algunas advertencias o pequeñas diferencias en los tipos de `rollupOptions` (como `advancedChunks`), pero acelera significativamente el tiempo de compilación.
 
 ## Testing
 

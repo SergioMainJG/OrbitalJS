@@ -6,9 +6,8 @@ import {
 import { bodies } from "@/features/simulation/stores/simulation-store";
 
 /**
- * BUG FIX: startComparison now passes the current simulation bodies to
- * initComparison so the overlay diverges from the actual planet positions,
- * not from a hardcoded Sun+Earth scenario.
+ * startComparison passes the current simulation bodies to
+ * initComparison so the overlay diverges from the actual planet positions.
  */
 export function startComparison(): void {
   const currentBodies = bodies();

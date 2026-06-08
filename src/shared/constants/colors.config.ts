@@ -9,7 +9,6 @@ export const SERIES_COLORS = {
   total: "#34d399",
 } as const;
 
-// BUG FIX: Added outer planets + Pluto colors
 export const PLANET_COLORS: Record<string, string> = {
   Sun: "#f97316",
   Mercury: "#9ca3af",

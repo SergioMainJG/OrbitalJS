@@ -43,9 +43,6 @@ export const EnergyPanelComponent: Component<EnergyPanelProps> = (props) => {
   const [history, setHistory] = createSignal<EnergySnapshot[]>([]);
   const [initialEnergy, setInitialEnergy] = createSignal<number | null>(null);
 
-  // BUG FIX: Track the number of bodies to detect scenario resets.
-  // When the body count changes (e.g. scenario reload), we reset the
-  // initial energy baseline so the drift monitor starts fresh.
   let lastBodyCount = 0;
   let lastBodyNames = '';
 
@@ -73,16 +70,13 @@ export const EnergyPanelComponent: Component<EnergyPanelProps> = (props) => {
     const ep = potentialEnergy(bodies);
     const et = totalEnergy(bodies);
 
-    // BUG FIX: detect scenario reset by checking body fingerprint.
-    // A change in body count OR a jump back to day=0 signals a new scenario.
     const currentBodyNames = bodies.map((b) => b.name).join(',');
     const scenarioChanged =
-      bodies.length !== lastBodyCount || currentBodyNames !== lastBodyNames || day < 1; // day reset to 0 means scenario reloaded
+      bodies.length !== lastBodyCount || currentBodyNames !== lastBodyNames || day < 1;
 
     if (scenarioChanged) {
       lastBodyCount = bodies.length;
       lastBodyNames = currentBodyNames;
-      // Reset everything on scenario change
       setInitialEnergy(et);
       setHistory([]);
     } else {
