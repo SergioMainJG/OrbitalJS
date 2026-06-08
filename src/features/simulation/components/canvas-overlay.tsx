@@ -26,11 +26,6 @@ const CanvasOverlay: Component = () => {
         <div class="text-[11px] text-orange-400">ERROR: {error().toFixed(4)} UA</div>
         <div class="text-[10px] text-red-500">FINAL</div>
       </div>
-
-      <div class="absolute top-1/2 right-1/4 z-10 -translate-y-5 text-[11px] font-semibold text-green-400">
-        INICIO
-      </div>
-      <div class="absolute top-1/2 right-1/4 z-10 h-2 w-2 -translate-y-1 rounded-full bg-green-400" />
     </>
   );
 };

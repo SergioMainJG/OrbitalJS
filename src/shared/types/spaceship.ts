@@ -34,6 +34,9 @@ export const SPACESHIP_TRAIL_LENGTH = 300;
 /** Factor de escala del vector velocidad al dibujar la flecha (px por AU/día) */
 export const VELOCITY_ARROW_SCALE = 60;
 
+/** Factor de escala para reducir la velocidad de lanzamiento inicial a valores orbitables */
+export const SPACESHIP_LAUNCH_SPEED_FACTOR = 0.05;
+
 /** Radio de colisión de la nave en AU */
 export const SPACESHIP_COLLISION_RADIUS_AU = 0.01;
 
@@ -57,8 +60,8 @@ export function dragToVelocity(
   scale: number,
 ): { vx: number; vy: number } {
   return {
-    vx: dragPx.dx / scale,
-    vy: -dragPx.dy / scale,
+    vx: (dragPx.dx / scale) * SPACESHIP_LAUNCH_SPEED_FACTOR,
+    vy: (-dragPx.dy / scale) * SPACESHIP_LAUNCH_SPEED_FACTOR,
   };
 }
 

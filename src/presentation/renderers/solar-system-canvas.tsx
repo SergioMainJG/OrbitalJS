@@ -13,6 +13,7 @@ import {
   isRunning,
   dt,
   integrator,
+  EARTH_INITIAL_POS,
 } from '@/features/simulation/stores/simulation-store';
 import { setTooltip } from '@/presentation/shared-components/tooltip-store';
 import { getHoveredBody } from './body-hit-test';
@@ -20,9 +21,16 @@ import { orbitalEnergy } from '@/core/physics/orbital-energy';
 import { SpaceshipLauncher } from './spaceship-launcher';
 import { drawSpaceship } from './draw-spaceship';
 import { SPACESHIP_NAME } from '@/shared/types/spaceship';
-import { tickComparison, isComparing } from '@/features/comparison/stores/comparison-store';
+import {
+  tickComparison,
+  isComparing,
+  comparisonState,
+} from '@/features/comparison/stores/comparison-store';
+import { COLORS, STYLES, UNIVERSAL_CONSTS } from '@/shared/constants';
 import type { RenderBody } from '@/shared/types';
 import type { Scene } from '@/shared/types/scene';
+
+const { MAX_DT_EULER, MAX_DT_RK4 } = UNIVERSAL_CONSTS;
 
 function buildScene(allBodies: RenderBody[], timeStep: number, elapsed: number): Scene {
   return {
@@ -33,6 +41,83 @@ function buildScene(allBodies: RenderBody[], timeStep: number, elapsed: number):
   };
 }
 
+// ---------------------------------------------------------------------------
+// BUG FIX: Draw comparison trails directly on canvas
+// ---------------------------------------------------------------------------
+function drawComparisonTrails(
+  ctx: CanvasRenderingContext2D,
+  scale: number,
+  cx: number,
+  cy: number
+): void {
+  const state = comparisonState;
+
+  // RK4 trails — solid blue
+  for (const trail of state.rk4Trails) {
+    if (trail.length < 2) continue;
+    ctx.save();
+    ctx.setLineDash([]);
+    ctx.lineWidth = STYLES.rk4.lineWidth;
+    for (let i = 1; i < trail.length; i++) {
+      const opacity = i / trail.length;
+      const prev = trail[i - 1]!;
+      const curr = trail[i]!;
+      ctx.beginPath();
+      ctx.moveTo(cx + prev.x * scale, cy - prev.y * scale);
+      ctx.lineTo(cx + curr.x * scale, cy - curr.y * scale);
+      ctx.strokeStyle = `${COLORS.rk4}${Math.floor(opacity * 200)
+        .toString(16)
+        .padStart(2, '0')}`;
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  // Euler trails — dashed red
+  for (const trail of state.eulerTrails) {
+    if (trail.length < 2) continue;
+    ctx.save();
+    ctx.setLineDash([4, 3]);
+    ctx.lineWidth = STYLES.euler.lineWidth;
+    for (let i = 1; i < trail.length; i++) {
+      const opacity = i / trail.length;
+      const prev = trail[i - 1]!;
+      const curr = trail[i]!;
+      ctx.beginPath();
+      ctx.moveTo(cx + prev.x * scale, cy - prev.y * scale);
+      ctx.lineTo(cx + curr.x * scale, cy - curr.y * scale);
+      ctx.strokeStyle = `${COLORS.euler}${Math.floor(opacity * 200)
+        .toString(16)
+        .padStart(2, '0')}`;
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  // Current body dots
+  for (const body of state.rk4Bodies) {
+    const px = cx + body.x * scale;
+    const py = cy - body.y * scale;
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(px, py, 3, 0, Math.PI * 2);
+    ctx.fillStyle = COLORS.rk4;
+    ctx.fill();
+    ctx.restore();
+  }
+
+  for (const body of state.eulerBodies) {
+    const px = cx + body.x * scale;
+    const py = cy - body.y * scale;
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(px, py, 3, 0, Math.PI * 2);
+    ctx.fillStyle = COLORS.euler;
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
 function SolarSystemCanvas() {
   let containerRef: HTMLDivElement | undefined;
   let canvasRef: HTMLCanvasElement | undefined;
@@ -40,17 +125,27 @@ function SolarSystemCanvas() {
   let animationLoop: AnimationLoop | null = null;
   let launcher: SpaceshipLauncher | null = null;
 
-  // Dimensiones actuales del canvas (sin DPR) para calcular cx/cy
   let canvasWidth = 800;
   let canvasHeight = 600;
+
+  let isPanning = false;
+  let startX = 0;
+  let startY = 0;
 
   const physicsEngine = new PhysicsEngine();
 
   const updatePhysics = (_wallDt: number) => {
     if (!isRunning()) return;
 
-    const simDt = dt() * simSpeed();
-    physicsEngine.setIntegrator(integrator() as IntegratorName);
+    const currentIntegrator = integrator() as IntegratorName;
+    physicsEngine.setIntegrator(currentIntegrator);
+
+    // BUG FIX: Clamp the effective simulation timestep per integrator.
+    // At simSpeed=10x, dt*simSpeed = 5 days which is fine for RK4 but
+    // catastrophically unstable for Euler (planets shoot off to infinity).
+    const rawDt = dt() * simSpeed();
+    const maxDt = currentIntegrator === 'Euler' ? MAX_DT_EULER : MAX_DT_RK4;
+    const simDt = Math.min(rawDt, maxDt);
 
     setBodies((prev) => {
       const next = physicsEngine.step(prev, simDt);
@@ -60,7 +155,8 @@ function SolarSystemCanvas() {
     setCurrentDay((d) => d + simDt);
 
     if (isComparing()) {
-      tickComparison(simDt);
+      // Use the same clamped dt for the comparison engine
+      tickComparison(Math.min(rawDt, MAX_DT_EULER));
     }
 
     if (launcher) {
@@ -77,11 +173,33 @@ function SolarSystemCanvas() {
     const ctx = canvasRef.getContext('2d');
     if (!ctx) return;
 
-    const cx = canvasWidth / 2;
-    const cy = canvasHeight / 2;
-    const scale = Math.min(canvasWidth, canvasHeight) / 2 / MAX_ORBIT_AU;
+    const camera = renderer.getCamera();
+    const scale = camera.scale;
+    const { cx, cy } = camera.getCenter();
 
     renderer.render(buildScene(bodies(), dt(), currentDay()));
+
+    // BUG FIX: draw comparison trails on every frame when active
+    if (isComparing()) {
+      drawComparisonTrails(ctx, scale, cx, cy);
+    }
+
+    // Draw Earth initial position (INICIO green marker) directly on canvas
+    const earthInitialX = EARTH_INITIAL_POS.x;
+    const earthInitialY = EARTH_INITIAL_POS.y;
+    const initialPx = cx + earthInitialX * scale;
+    const initialPy = cy - earthInitialY * scale;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(initialPx, initialPy, 4, 0, Math.PI * 2);
+    ctx.fillStyle = '#4ade80';
+    ctx.fill();
+
+    ctx.fillStyle = '#4ade80';
+    ctx.font = '10px monospace';
+    ctx.fillText('INICIO', initialPx - 18, initialPy - 8);
+    ctx.restore();
 
     const ship = bodies().find((b) => b.name === SPACESHIP_NAME);
     if (ship) {
@@ -114,9 +232,10 @@ function SolarSystemCanvas() {
 
     renderer.resize(width, height);
 
+    const camera = renderer.getCamera();
     if (launcher) {
-      const scale = Math.min(width, height) / 2 / MAX_ORBIT_AU;
-      launcher.updateTransform(scale, width / 2, height / 2);
+      const { cx, cy } = camera.getCenter();
+      launcher.updateTransform(camera.scale, cx, cy);
     }
 
     renderScene();
@@ -130,11 +249,26 @@ function SolarSystemCanvas() {
     const mouseY = e.clientY - rect.top;
 
     const camera = renderer.getCamera();
-    const scale = camera.scale;
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
 
-    const hoveredPlanet = getHoveredBody(mouseX, mouseY, bodies(), scale, centerX, centerY);
+    if (isPanning) {
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      camera.pan(dx, dy);
+
+      startX = e.clientX;
+      startY = e.clientY;
+
+      const { cx, cy } = camera.getCenter();
+      launcher?.updateTransform(camera.scale, cx, cy);
+
+      renderScene();
+      return;
+    }
+
+    const scale = camera.scale;
+    const { cx, cy } = camera.getCenter();
+
+    const hoveredPlanet = getHoveredBody(mouseX, mouseY, bodies(), scale, cx, cy);
 
     if (hoveredPlanet) {
       const energy = orbitalEnergy(hoveredPlanet);
@@ -164,6 +298,9 @@ function SolarSystemCanvas() {
 
   const handleMouseLeave = () => {
     setTooltip(null);
+    if (isPanning) {
+      isPanning = false;
+    }
   };
 
   onMount(() => {
@@ -188,8 +325,9 @@ function SolarSystemCanvas() {
     renderer.initialize();
     rendererRegistry.register('canvas', renderer);
 
-    const scale = Math.min(width, height) / 2 / MAX_ORBIT_AU;
-    launcher = new SpaceshipLauncher(canvasRef, context, scale, width / 2, height / 2, {
+    const camera = renderer.getCamera();
+    const { cx, cy } = camera.getCenter();
+    launcher = new SpaceshipLauncher(canvasRef, context, camera.scale, cx, cy, {
       onLaunch: (spaceship) => {
         const spaceshipRender: RenderBody = {
           ...spaceship,
@@ -206,6 +344,12 @@ function SolarSystemCanvas() {
         console.info(`[SpaceshipLauncher] Impacto con ${bodyName}`);
       },
     });
+
+    // BUG FIX: attach launcher to canvas element so SimulationControls can reset it
+    (canvasRef as HTMLCanvasElement & { launcherInstance?: SpaceshipLauncher }).launcherInstance =
+      launcher;
+
+    canvasRef.addEventListener('wheel', handleWheel, { passive: false });
 
     animationLoop = new AnimationLoop(updatePhysics, renderScene);
     animationLoop.start();
@@ -231,11 +375,68 @@ function SolarSystemCanvas() {
     resizeObserver.observe(containerRef);
 
     onCleanup(() => {
+      if (canvasRef) {
+        canvasRef.removeEventListener('wheel', handleWheel);
+      }
       animationLoop?.stop();
       launcher?.destroy();
       resizeObserver.disconnect();
     });
   });
+
+  const handleMouseDown = (e: MouseEvent) => {
+    if (e.button === 2 || (e.button === 0 && e.shiftKey)) {
+      isPanning = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      setTooltip(null);
+    }
+  };
+
+  const handleMouseUp = () => {
+    if (isPanning) {
+      isPanning = false;
+    }
+  };
+
+  const handleWheel = (e: WheelEvent) => {
+    e.preventDefault();
+    if (!renderer) return;
+
+    const rect = canvasRef!.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+
+    const camera = renderer.getCamera();
+    const zoomFactor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
+
+    camera.zoom(zoomFactor, mouseX, mouseY);
+
+    const { cx, cy } = camera.getCenter();
+    launcher?.updateTransform(camera.scale, cx, cy);
+
+    renderScene();
+  };
+
+  const handleZoomButton = (factor: number) => {
+    if (!renderer) return;
+    const camera = renderer.getCamera();
+    camera.zoom(factor, canvasWidth / 2, canvasHeight / 2);
+
+    const { cx, cy } = camera.getCenter();
+    launcher?.updateTransform(camera.scale, cx, cy);
+    renderScene();
+  };
+
+  const handleResetZoom = () => {
+    if (!renderer) return;
+    const camera = renderer.getCamera();
+    camera.autoScale(MAX_ORBIT_AU);
+
+    const { cx, cy } = camera.getCenter();
+    launcher?.updateTransform(camera.scale, cx, cy);
+    renderScene();
+  };
 
   return (
     <div
@@ -248,10 +449,37 @@ function SolarSystemCanvas() {
         ref={(el) => {
           canvasRef = el;
         }}
+        onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseLeave}
         class="block h-full w-full"
       />
+
+      {/* Floating Zoom and Reset Controls */}
+      <div class="absolute right-3 bottom-3 z-10 flex flex-col gap-1 rounded-lg border border-slate-800 bg-slate-950/80 p-1 shadow-lg backdrop-blur-md">
+        <button
+          onClick={() => handleZoomButton(1.3)}
+          class="flex h-7 w-7 items-center justify-center rounded bg-slate-900 text-sm font-bold text-slate-200 transition-colors hover:bg-slate-800 hover:text-white"
+          title="Acercar (Zoom In)"
+        >
+          ＋
+        </button>
+        <button
+          onClick={() => handleZoomButton(1 / 1.3)}
+          class="flex h-7 w-7 items-center justify-center rounded bg-slate-900 text-sm font-bold text-slate-200 transition-colors hover:bg-slate-800 hover:text-white"
+          title="Alejar (Zoom Out)"
+        >
+          －
+        </button>
+        <button
+          onClick={handleResetZoom}
+          class="flex h-7 w-7 items-center justify-center rounded bg-slate-900 text-sm font-bold text-slate-200 transition-colors hover:bg-slate-800 hover:text-white"
+          title="Centrar / Reset Zoom"
+        >
+          ⌖
+        </button>
+      </div>
     </div>
   );
 }

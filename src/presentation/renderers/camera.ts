@@ -2,6 +2,8 @@ export class Camera {
   public width: number;
   public height: number;
   public scale: number;
+  public offsetX: number = 0;
+  public offsetY: number = 0;
   private centerX: number;
   private centerY: number;
 
@@ -22,11 +24,40 @@ export class Camera {
 
   autoScale(maxOrbitAU: number, padding: number = 1.25): void {
     this.scale = Math.min(this.width, this.height) / (maxOrbitAU * 2 * padding);
+    this.offsetX = 0;
+    this.offsetY = 0;
+  }
+
+  zoom(factor: number, mouseX?: number, mouseY?: number): void {
+    const oldScale = this.scale;
+    this.scale *= factor;
+    // Limit scale to a reasonable range
+    this.scale = Math.max(0.5, Math.min(100000, this.scale));
+
+    if (mouseX !== undefined && mouseY !== undefined) {
+      const scaleRatio = this.scale / oldScale;
+      const dx = mouseX - (this.centerX + this.offsetX);
+      const dy = mouseY - (this.centerY + this.offsetY);
+      this.offsetX -= (dx * (scaleRatio - 1)) / scaleRatio;
+      this.offsetY -= (dy * (scaleRatio - 1)) / scaleRatio;
+    }
+  }
+
+  pan(dx: number, dy: number): void {
+    this.offsetX += dx;
+    this.offsetY += dy;
+  }
+
+  getCenter(): { cx: number; cy: number } {
+    return {
+      cx: this.centerX + this.offsetX,
+      cy: this.centerY + this.offsetY,
+    };
   }
 
   applyTransform(ctx: CanvasRenderingContext2D): void {
     ctx.save();
-    ctx.translate(this.centerX, this.centerY);
+    ctx.translate(this.centerX + this.offsetX, this.centerY + this.offsetY);
     ctx.scale(this.scale, this.scale);
   }
 

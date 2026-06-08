@@ -2,7 +2,9 @@ import { createSignal } from "solid-js";
 import type { RenderBody } from "@/shared/types";
 import { SOLAR_SYSTEM_SCENARIO } from "@/shared/scenarios/solar-system.scenario";
 
-const MAX_ORBIT_AU = 1.52;
+// BUG FIX: MAX_ORBIT_AU updated to 40 to accommodate Pluto (39.5 AU).
+// The camera auto-scales based on this value, so the full solar system is visible.
+export const MAX_ORBIT_AU = 40;
 
 // Scenario bodies without rendering properties — these are injected by loadScenario use-case
 const rawScenarioBodies = SOLAR_SYSTEM_SCENARIO.bodies;
@@ -25,7 +27,7 @@ const [simulatedTime, setSimulatedTime] = createSignal(365);
 const [logMessages, setLogMessages] = createSignal<string[]>([
   "[INFO] Simulación iniciada",
   "[INFO] Integrador: RK4 | dt: 0.5 días",
-  "[INFO] Validación con datos NASA: Tierra (JPL Horizons)",
+  "[INFO] Sistema Solar Completo: Sol + 8 planetas + Plutón",
 ]);
 
 export {
@@ -50,5 +52,4 @@ export {
   logMessages,
   setLogMessages,
   rawScenarioBodies,
-  MAX_ORBIT_AU,
 };

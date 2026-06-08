@@ -138,10 +138,12 @@ export async function fetchAllPlanets(epoch: string): Promise<Map<PlanetKey, Hor
 
   for (const [key, naifId] of entries) {
     try {
+      // eslint-disable-next-line no-await-in-loop
       const raw = await fetchHorizonsVector(naifId, epoch);
       map.set(key, raw);
       console.info(`[jpl-horizons-fetcher] ✓ ${key} (NAIF ${naifId})`);
       // Evitar saturar la API de JPL (rate limit/concurrencia)
+      // eslint-disable-next-line no-await-in-loop
       await new Promise((resolve) => setTimeout(resolve, 500));
     } catch (error) {
       console.error(

@@ -14,7 +14,7 @@ import { addTrailPoint } from "./body-renderer";
 import {
   SPACESHIP_NAME,
   SPACESHIP_TRAIL_LENGTH,
-  VELOCITY_ARROW_SCALE,
+  SPACESHIP_LAUNCH_SPEED_FACTOR,
 } from "@/shared/types/spaceship";
 
 // ---------------------------------------------------------------------------
@@ -101,6 +101,7 @@ export function drawVelocityArrow(
   ctx: CanvasRenderingContext2D,
   origin: { x: number; y: number },
   current: { x: number; y: number },
+  scale: number,
 ): void {
   const dx = current.x - origin.x;
   const dy = current.y - origin.y;
@@ -139,11 +140,11 @@ export function drawVelocityArrow(
   // Preview del triángulo en el origen
   drawShapeTriangle(ctx, origin.x, origin.y, angle, "rgba(0,255,255,0.5)");
 
-  // Etiqueta de velocidad estimada
-  const speedLabel = ((length / VELOCITY_ARROW_SCALE) * 10).toFixed(1);
+  // Etiqueta de velocidad estimada basada en la escala de la cámara
+  const speed = (length / scale) * SPACESHIP_LAUNCH_SPEED_FACTOR;
   ctx.fillStyle = "rgba(0,255,255,0.8)";
   ctx.font = "11px monospace";
-  ctx.fillText(`v ≈ ${speedLabel} AU/día`, current.x + 10, current.y - 10);
+  ctx.fillText(`v ≈ ${speed.toFixed(4)} AU/día`, current.x + 10, current.y - 10);
 
   ctx.restore();
 }

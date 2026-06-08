@@ -43,6 +43,12 @@ export const EnergyPanelComponent: Component<EnergyPanelProps> = (props) => {
   const [history, setHistory] = createSignal<EnergySnapshot[]>([]);
   const [initialEnergy, setInitialEnergy] = createSignal<number | null>(null);
 
+  // BUG FIX: Track the number of bodies to detect scenario resets.
+  // When the body count changes (e.g. scenario reload), we reset the
+  // initial energy baseline so the drift monitor starts fresh.
+  let lastBodyCount = 0;
+  let lastBodyNames = '';
+
   const latestSnapshot = () => {
     const h = history();
     return h.length > 0 ? h[h.length - 1]! : null;
@@ -67,7 +73,21 @@ export const EnergyPanelComponent: Component<EnergyPanelProps> = (props) => {
     const ep = potentialEnergy(bodies);
     const et = totalEnergy(bodies);
 
-    setInitialEnergy((prev) => (prev === null ? et : prev));
+    // BUG FIX: detect scenario reset by checking body fingerprint.
+    // A change in body count OR a jump back to day=0 signals a new scenario.
+    const currentBodyNames = bodies.map((b) => b.name).join(',');
+    const scenarioChanged =
+      bodies.length !== lastBodyCount || currentBodyNames !== lastBodyNames || day < 1; // day reset to 0 means scenario reloaded
+
+    if (scenarioChanged) {
+      lastBodyCount = bodies.length;
+      lastBodyNames = currentBodyNames;
+      // Reset everything on scenario change
+      setInitialEnergy(et);
+      setHistory([]);
+    } else {
+      setInitialEnergy((prev) => (prev === null ? et : prev));
+    }
 
     const snap: EnergySnapshot = { day, kinetic: ek, potential: ep, total: et };
 
@@ -247,7 +267,7 @@ export const EnergyPanelComponent: Component<EnergyPanelProps> = (props) => {
               d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"
             />
           </svg>
-          <span class="text-error font-semibold">RK4 necesita dt mas pequeño</span>
+          <span class="text-error font-semibold">Integrador necesita dt mas pequeño</span>
         </div>
       </Show>
 

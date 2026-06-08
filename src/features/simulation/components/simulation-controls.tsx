@@ -10,21 +10,39 @@ import {
   setIntegrator,
   dt,
 } from '@/features/simulation/stores/simulation-store';
-import { clearSpaceshipTrail } from '@/presentation/renderers/draw-spaceship';
 import { PhysicsEngine, type IntegratorName } from '@/core/engines/physics-engine';
 import { loadScenario } from '@/application/use-cases/load-scenario.use-case';
 import { SOLAR_SYSTEM_SCENARIO } from '@/shared/scenarios';
+import { resetComparison } from '@/features/comparison/stores/comparison-store';
+import { SPACESHIP_NAME } from '@/shared/types/spaceship';
+import type { SpaceshipLauncher } from '@/presentation/renderers/spaceship-launcher';
 
 const SPEEDS = [0.1, 0.5, 1, 2, 5, 10];
 
-// Singleton: una sola instancia para toda la vida del componente
 const physicsEngine = new PhysicsEngine();
 
 const SimulationControls: Component = () => {
   const handleReset = () => {
     setIsRunning(false);
     loadScenario(SOLAR_SYSTEM_SCENARIO);
-    clearSpaceshipTrail();
+
+    // BUG FIX: reset spaceship launcher state so a new ship can be launched.
+    // We access the launcher via the canvas element where it was attached.
+    const canvas = document.querySelector('canvas') as
+      | (HTMLCanvasElement & {
+          launcherInstance?: SpaceshipLauncher;
+        })
+      | null;
+    if (canvas?.launcherInstance) {
+      canvas.launcherInstance.reset();
+    }
+
+    // Remove any existing spaceship from bodies
+    setBodies((prev) => prev.filter((b) => b.name !== SPACESHIP_NAME));
+
+    // BUG FIX: also reset comparison state so energy monitor starts fresh
+    resetComparison();
+
     setTimeout(() => setIsRunning(true), 50);
   };
 
@@ -113,7 +131,7 @@ const SimulationControls: Component = () => {
           Integrador
         </span>
         <div class="flex gap-1">
-          {['Euler', 'RK4'].map((name) => (
+          {(['Euler', 'RK4'] as const).map((name) => (
             <button
               onClick={() => setIntegrator(name)}
               class={`flex-1 rounded px-2 py-1 text-xs ${

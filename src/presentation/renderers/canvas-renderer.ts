@@ -76,13 +76,8 @@ export class CanvasRenderer implements Renderer {
 
   render(scene: Scene): void {
     this.clear();
-    this.drawBodiesService.draw(
-      this.ctx,
-      scene.bodies,
-      this.camera.scale,
-      this.width / 2,
-      this.height / 2,
-    );
+    const { cx, cy } = this.camera.getCenter();
+    this.drawBodiesService.draw(this.ctx, scene.bodies, this.camera.scale, cx, cy);
   }
 
   destroy(): void {

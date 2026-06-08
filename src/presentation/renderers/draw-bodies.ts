@@ -13,7 +13,9 @@ export class DrawBodiesService {
   ): void {
     for (const body of bodies) {
       const px = cx + body.x * scale;
-      const py = cy + body.y * scale;
+      // BUG FIX: Y must be inverted because simulation Y↑ but canvas Y↓
+      // Previously was cy + body.y * scale which mirrored orbits below centre
+      const py = cy - body.y * scale;
 
       const current = this.trails.get(body.name) ?? [];
       const updated = addTrailPoint(current, { x: px, y: py }, 200);

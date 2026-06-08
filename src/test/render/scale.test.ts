@@ -83,13 +83,15 @@ function createTrackedCtx() {
   };
 }
 
+import { getBodyRadius } from "@/presentation/renderers/body-renderer";
+
 const SUN: BodyState = { name: "Sun", mass: 333_000, x: 0, y: 0, vx: 0, vy: 0 };
 const MERCURY: BodyState = { name: "Mercury", mass: 0.055, x: 0.39, y: 0, vx: 0, vy: 0 };
 const VENUS: BodyState = { name: "Venus", mass: 0.815, x: 0.72, y: 0, vx: 0, vy: 0 };
 const EARTH: BodyState = { name: "Earth", mass: 1, x: 1, y: 0, vx: 0, vy: 0.0172 };
 const MARS: BodyState = { name: "Mars", mass: 0.107, x: 1.52, y: 0, vx: 0, vy: 0.0124 };
 
-const computeRadius = (mass: number) => 2 + Math.log10(1 + mass * 1e6) * 3;
+const computeRadius = getBodyRadius;
 
 describe("drawPlanets", () => {
   beforeEach(() => clearTrails());

@@ -1,27 +1,46 @@
 import type { SimulationScenario } from "@/core/contracts/scenario.contract";
 
+// Gravitational constant in AU³ / (M☉ · day²)
+const G = (4 * Math.PI * Math.PI) / (365.25 * 365.25);
+
+/**
+ * Circular orbit speed at distance r (AU) from a body of mass M (solar masses).
+ * v = sqrt(G * M / r)
+ */
+const vCirc = (r: number, M = 1) => Math.sqrt((G * M) / r);
+
+/**
+ * Full solar system scenario: Sun + 8 planets + Pluto.
+ * All bodies start on the positive X axis (simplified but stable).
+ *
+ * Masses in M☉, positions in AU, velocities in AU/day.
+ * Sources: NASA Planetary Fact Sheet, JPL Horizons.
+ */
 export const SOLAR_SYSTEM_SCENARIO: SimulationScenario = {
-  id: "solar-system-inner",
-  name: "Sistema Solar Interior",
-  description: "Mercurio, Venus, Tierra y Marte en condiciones iniciales J2000",
-  maxOrbitAU: 1.52,
+  id: "solar-system-full",
+  name: "Sistema Solar Completo",
+  description: "Sol + 8 planetas + Plutón en condiciones iniciales circulares J2000",
+  maxOrbitAU: 40,
   bodies: [
+    // ── Sol ─────────────────────────────────────────────────────────────────
     { name: "Sun", mass: 1, x: 0, y: 0, vx: 0, vy: 0 },
+
+    // ── Planetas interiores ──────────────────────────────────────────────────
     {
       name: "Mercury",
       mass: 1.66e-7,
-      x: 0.39,
+      x: 0.387,
       y: 0,
       vx: 0,
-      vy: Math.sqrt((4 * Math.PI * Math.PI) / (365.25 * 365.25 * 0.39)),
+      vy: vCirc(0.387),
     },
     {
       name: "Venus",
       mass: 2.45e-6,
-      x: 0.72,
+      x: 0.723,
       y: 0,
       vx: 0,
-      vy: Math.sqrt((4 * Math.PI * Math.PI) / (365.25 * 365.25 * 0.72)),
+      vy: vCirc(0.723),
     },
     {
       name: "Earth",
@@ -29,15 +48,64 @@ export const SOLAR_SYSTEM_SCENARIO: SimulationScenario = {
       x: 1.0,
       y: 0,
       vx: 0,
-      vy: (2 * Math.PI) / 365.25,
+      vy: vCirc(1.0),
     },
     {
       name: "Mars",
-      mass: 3.21e-7,
-      x: 1.52,
+      mass: 3.213e-7,
+      x: 1.524,
       y: 0,
       vx: 0,
-      vy: Math.sqrt((4 * Math.PI * Math.PI) / (365.25 * 365.25 * 1.52)),
+      vy: vCirc(1.524),
+    },
+
+    // ── Planetas exteriores ──────────────────────────────────────────────────
+    {
+      name: "Jupiter",
+      // 1 Jupiter mass = 9.543e-4 M☉
+      mass: 9.543e-4,
+      x: 5.203,
+      y: 0,
+      vx: 0,
+      vy: vCirc(5.203),
+    },
+    {
+      name: "Saturn",
+      // 1 Saturn mass = 2.857e-4 M☉
+      mass: 2.857e-4,
+      x: 9.537,
+      y: 0,
+      vx: 0,
+      vy: vCirc(9.537),
+    },
+    {
+      name: "Uranus",
+      // 1 Uranus mass = 4.366e-5 M☉
+      mass: 4.366e-5,
+      x: 19.191,
+      y: 0,
+      vx: 0,
+      vy: vCirc(19.191),
+    },
+    {
+      name: "Neptune",
+      // 1 Neptune mass = 5.151e-5 M☉
+      mass: 5.151e-5,
+      x: 30.069,
+      y: 0,
+      vx: 0,
+      vy: vCirc(30.069),
+    },
+
+    // ── Plutón (planeta enano) ───────────────────────────────────────────────
+    {
+      name: "Pluto",
+      // 1 Pluto mass = 6.58e-9 M☉
+      mass: 6.58e-9,
+      x: 39.5,
+      y: 0,
+      vx: 0,
+      vy: vCirc(39.5),
     },
   ],
 };
