@@ -1,15 +1,10 @@
 /* eslint-disable */
 /* prettier-ignore */
 import { describe, expect, it } from 'vitest';
-import {
-  energyDrift,
-  getDriftStatus,
-  kineticEnergy,
-  potentialEnergy,
-  totalEnergy,
-} from "@/physics/energy";
-import { UNIVERSAL_CONSTS } from "@/constants/constants.config";
-import type { BodyState } from "@/types";
+import { kineticEnergy, potentialEnergy, totalEnergy } from "@/core/physics/energy";
+import { energyDrift, getDriftStatus } from "@/core/diagnostics/energy-monitor";
+import { UNIVERSAL_CONSTS } from "@/shared/constants/constants.config";
+import type { BodyState } from "@/shared/types";
 
 const { G } = UNIVERSAL_CONSTS;
 

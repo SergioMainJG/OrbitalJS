@@ -1,8 +1,8 @@
 /* eslint-disable */
 /* prettier-ignore */
 import { describe, it, expect } from 'vitest';
-import { eulerStep } from "@/physics/";
-import type { BodyState } from "@/types/";
+import { eulerStep } from "@/core/physics/euler-integrator";
+import type { BodyState } from "@/shared/types";
 
 const G = (4 * Math.PI * Math.PI) / (365.25 * 365.25);
 

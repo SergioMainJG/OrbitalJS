@@ -8,8 +8,8 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { parseHorizonsResponse } from "@/utils/jpl-horizons-parser";
-import type { HorizonsRawResponse } from "@/types/horizons";
+import { parseHorizonsResponse } from "@/shared/utils/jpl-horizons-parser";
+import type { HorizonsRawResponse } from "@/shared/types/horizons";
 
 // ---------------------------------------------------------------------------
 // Fixtures — extractos reales del formato de texto de JPL Horizons

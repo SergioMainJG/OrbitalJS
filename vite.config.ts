@@ -17,16 +17,14 @@ export default defineConfig(({ mode }) => {
       tailwindcss()
     ],
 
-    resolve: {
+resolve: {
       alias: {
         '@': path.resolve(__dirname, 'src'),
-        '@/physics': path.resolve(__dirname, 'src/physics'),
-        '@/render': path.resolve(__dirname, 'src/render'),
-        '@/ui': path.resolve(__dirname, 'src/ui'),
-        '@/state': path.resolve(__dirname, 'src/state'),
-        '@/types': path.resolve(__dirname, 'src/types'),
-        '@/constants': path.resolve(__dirname, 'src/constants'),
-        '@/utils': path.resolve(__dirname, 'src/utils'),
+        '@/core': path.resolve(__dirname, 'src/core'),
+        '@/application': path.resolve(__dirname, 'src/application'),
+        '@/features': path.resolve(__dirname, 'src/features'),
+        '@/presentation': path.resolve(__dirname, 'src/presentation'),
+        '@/shared': path.resolve(__dirname, 'src/shared'),
         daisyui: path.resolve(__dirname, 'node_modules/daisyui/index.js'),
       },
       conditions: ['development', 'browser'],
