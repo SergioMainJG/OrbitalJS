@@ -19,6 +19,10 @@ const KM_S_PER_AU_DAY = 1731.48;
 export const HohmannPanel: Component = () => {
   const [isOpen, setIsOpen] = createSignal(false);
 
+  const isSupportedSystem = () => {
+    return bodies().some((b) => b.name === 'Sun' || b.name === 'Earth');
+  };
+
   const availablePlanets = createMemo(
     () => {
       return bodies().filter((b) => b.name !== 'Sun' && !b.name.startsWith(SPACESHIP_NAME));
@@ -142,11 +146,9 @@ export const HohmannPanel: Component = () => {
     const vxShip = origin.vx + dv1 * tx;
     const vyShip = origin.vy + dv1 * ty;
 
-    // --- CORRECCIÓN DE SINGULARIDAD GRAVITACIONAL ---
-    // Sacamos la nave del centro exacto del planeta usando el radio de colisión
-    const baseRadius = (origin as RenderBody).radius ?? 5;
-    const dynamicRadiusAU = (baseRadius / 100) * maxOrbitAU();
-    const offsetDistance = dynamicRadiusAU * 3;
+    // --- CORRECCIÓN DEL RADIO DE ENGANCHE ---
+    // Usar estrictamente un 1% del tamaño del escenario para evitar lanzamientos remotos
+    const offsetDistance = maxOrbitAU() * 0.01;
 
     // Si aceleramos (dv1 > 0), nos ponemos por delante. Si frenamos (dv1 < 0), nos ponemos por detrás.
     const sign = dv1 >= 0 ? 1 : -1;
@@ -187,104 +189,119 @@ export const HohmannPanel: Component = () => {
 
       <Show when={isOpen()}>
         <div class="flex flex-col gap-3 border-t border-slate-700 p-3 text-xs text-slate-300">
-          <div class="flex gap-2">
-            <div class="flex-1">
-              <label class="mb-1 block text-[10px] text-slate-400 uppercase">Origen</label>
-              <select
-                value={hohmannParams().origin}
-                onChange={(e) => handleOriginChange(e.currentTarget.value)}
-                class="select select-bordered select-xs w-full border-slate-700 bg-slate-800 text-slate-300"
-              >
-                <For each={availablePlanets()}>
-                  {(p) => (
-                    <option value={p.name} selected={p.name === hohmannParams().origin}>
-                      {p.name}
-                    </option>
-                  )}
-                </For>
-              </select>
-            </div>
-
-            <div class="flex-1">
-              <label class="mb-1 block text-[10px] text-slate-400 uppercase">Destino</label>
-              <select
-                value={hohmannParams().target}
-                onChange={(e) => handleTargetChange(e.currentTarget.value)}
-                class="select select-bordered select-xs w-full border-slate-700 bg-slate-800 text-slate-300"
-              >
-                <For each={availablePlanets()}>
-                  {(p) => (
-                    <option value={p.name} selected={p.name === hohmannParams().target}>
-                      {p.name}
-                    </option>
-                  )}
-                </For>
-              </select>
-            </div>
-          </div>
-
           <Show
-            when={calculation()}
+            when={isSupportedSystem()}
             fallback={
-              <div class="py-1 text-center text-slate-500">Selecciona planetas distintos</div>
+              <div class="rounded border border-slate-800 bg-slate-950/40 p-3 text-center leading-relaxed text-slate-400">
+                La transferencia de Hohmann no está disponible en este escenario. Su cálculo
+                matemático asume un sistema de dos cuerpos estables con un centro de gravedad
+                dominante estacionario.
+              </div>
             }
           >
-            {(calc) => (
-              <div class="flex flex-col gap-2 rounded bg-slate-950/60 p-2">
-                <div class="flex justify-between">
-                  <span class="text-slate-500">Distancia r₁:</span>
-                  <span class="font-mono">{calc().r1.toFixed(3)} UA</span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-slate-500">Distancia r₂:</span>
-                  <span class="font-mono">{calc().r2.toFixed(3)} UA</span>
-                </div>
-                <div class="my-1 border-t border-slate-800"></div>
-                <div class="flex justify-between">
-                  <span class="text-slate-500">Impulso Δv₁:</span>
-                  <span class="font-mono text-green-400">
-                    {(calc().dv1 * KM_S_PER_AU_DAY).toFixed(2)} km/s
-                  </span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-slate-500">Impulso Δv₂:</span>
-                  <span class="font-mono text-green-400">
-                    {(calc().dv2 * KM_S_PER_AU_DAY).toFixed(2)} km/s
-                  </span>
-                </div>
-                <div class="flex justify-between font-bold">
-                  <span class="text-slate-400">Total ΔV:</span>
-                  <span class="font-mono text-yellow-400">
-                    {(calc().totalDv * KM_S_PER_AU_DAY).toFixed(2)} km/s
-                  </span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-slate-500">Tiempo de viaje:</span>
-                  <span class="font-mono text-blue-400">
-                    {calc().timeOfFlightDays.toFixed(1)} días
-                  </span>
-                </div>
-
-                <div class="mt-2 flex flex-col gap-1.5">
-                  <label class="flex cursor-pointer items-center gap-2 py-1">
-                    <input
-                      type="checkbox"
-                      checked={showHohmann()}
-                      onChange={(e) => setShowHohmann(e.currentTarget.checked)}
-                      class="checkbox checkbox-xs checkbox-primary"
-                    />
-                    <span class="text-[11px] text-slate-300">Mostrar elipse de transferencia</span>
-                  </label>
-
-                  <button
-                    onClick={handleLaunchHohmann}
-                    class="btn btn-xs btn-primary w-full text-[10px]"
+            <div class="flex flex-col gap-3">
+              <div class="flex gap-2">
+                <div class="flex-1">
+                  <label class="mb-1 block text-[10px] text-slate-400 uppercase">Origen</label>
+                  <select
+                    value={hohmannParams().origin}
+                    onChange={(e) => handleOriginChange(e.currentTarget.value)}
+                    class="select select-bordered select-xs w-full border-slate-700 bg-slate-800 text-slate-300"
                   >
-                    🚀 Lanzar Nave Hohmann
-                  </button>
+                    <For each={availablePlanets()}>
+                      {(p) => (
+                        <option value={p.name} selected={p.name === hohmannParams().origin}>
+                          {p.name}
+                        </option>
+                      )}
+                    </For>
+                  </select>
+                </div>
+
+                <div class="flex-1">
+                  <label class="mb-1 block text-[10px] text-slate-400 uppercase">Destino</label>
+                  <select
+                    value={hohmannParams().target}
+                    onChange={(e) => handleTargetChange(e.currentTarget.value)}
+                    class="select select-bordered select-xs w-full border-slate-700 bg-slate-800 text-slate-300"
+                  >
+                    <For each={availablePlanets()}>
+                      {(p) => (
+                        <option value={p.name} selected={p.name === hohmannParams().target}>
+                          {p.name}
+                        </option>
+                      )}
+                    </For>
+                  </select>
                 </div>
               </div>
-            )}
+
+              <Show
+                when={calculation()}
+                fallback={
+                  <div class="py-1 text-center text-slate-500">Selecciona planetas distintos</div>
+                }
+              >
+                {(calc) => (
+                  <div class="flex flex-col gap-2 rounded bg-slate-950/60 p-2">
+                    <div class="flex justify-between">
+                      <span class="text-slate-500">Distancia r₁:</span>
+                      <span class="font-mono">{calc().r1.toFixed(3)} UA</span>
+                    </div>
+                    <div class="flex justify-between">
+                      <span class="text-slate-500">Distancia r₂:</span>
+                      <span class="font-mono">{calc().r2.toFixed(3)} UA</span>
+                    </div>
+                    <div class="my-1 border-t border-slate-800"></div>
+                    <div class="flex justify-between">
+                      <span class="text-slate-500">Impulso Δv₁:</span>
+                      <span class="font-mono text-green-400">
+                        {(calc().dv1 * KM_S_PER_AU_DAY).toFixed(2)} km/s
+                      </span>
+                    </div>
+                    <div class="flex justify-between">
+                      <span class="text-slate-500">Impulso Δv₂:</span>
+                      <span class="font-mono text-green-400">
+                        {(calc().dv2 * KM_S_PER_AU_DAY).toFixed(2)} km/s
+                      </span>
+                    </div>
+                    <div class="flex justify-between font-bold">
+                      <span class="text-slate-400">Total ΔV:</span>
+                      <span class="font-mono text-yellow-400">
+                        {(calc().totalDv * KM_S_PER_AU_DAY).toFixed(2)} km/s
+                      </span>
+                    </div>
+                    <div class="flex justify-between">
+                      <span class="text-slate-500">Tiempo de viaje:</span>
+                      <span class="font-mono text-blue-400">
+                        {calc().timeOfFlightDays.toFixed(1)} días
+                      </span>
+                    </div>
+
+                    <div class="mt-2 flex flex-col gap-1.5">
+                      <label class="flex cursor-pointer items-center gap-2 py-1">
+                        <input
+                          type="checkbox"
+                          checked={showHohmann()}
+                          onChange={(e) => setShowHohmann(e.currentTarget.checked)}
+                          class="checkbox checkbox-xs checkbox-primary"
+                        />
+                        <span class="text-[11px] text-slate-300">
+                          Mostrar elipse de transferencia
+                        </span>
+                      </label>
+
+                      <button
+                        onClick={handleLaunchHohmann}
+                        class="btn btn-xs btn-primary w-full text-[10px]"
+                      >
+                        🚀 Lanzar Nave Hohmann
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </Show>
+            </div>
           </Show>
         </div>
       </Show>

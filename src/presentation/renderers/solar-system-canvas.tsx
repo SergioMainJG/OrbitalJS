@@ -10,7 +10,6 @@ import {
   setCurrentDay,
   currentDay,
   simSpeed,
-  maxOrbitAU,
   MAX_ORBIT_AU,
   isRunning,
   dt,
@@ -479,22 +478,22 @@ function SolarSystemCanvas() {
 
         const currentBodies = bodies();
 
-        // 1. Evitar singularidad y heredar inercia orbital
         for (const body of currentBodies) {
           const dx = spaceship.x - body.x;
           const dy = spaceship.y - body.y;
           const dist = Math.sqrt(dx * dx + dy * dy);
-          const baseRadius = body.radius ?? 5;
-          const bodyRadiusAU = (baseRadius / 100) * maxOrbitAU();
 
-          // Ampliamos el radio de detección a * 2 para atrapar clicks cercanos al planeta
+          // Usamos la escala directa de la cámara
+          const baseRadius = body.radius ?? 5;
+          const bodyRadiusAU = baseRadius / camera.scale;
+
           if (dist < bodyRadiusAU * 2) {
             launchedFrom = body.name;
-            addedVx = body.vx; // Sumar inercia
-            addedVy = body.vy; // Sumar inercia
+            addedVx = body.vx;
+            addedVy = body.vy;
 
-            // Empujar la nave a una distancia segura
-            const safeDistance = bodyRadiusAU * 2.5;
+            // Distancia de despliegue pegada a la superficie visible para no romper la gravedad
+            const safeDistance = bodyRadiusAU * 1.5;
             const vMag = Math.sqrt(spaceship.vx * spaceship.vx + spaceship.vy * spaceship.vy);
             if (vMag > 0) {
               launchX = body.x + (spaceship.vx / vMag) * safeDistance;
@@ -504,23 +503,30 @@ function SolarSystemCanvas() {
           }
         }
 
-        // 2. Nombre único para que React/Solid no las confunda
         const uniqueName = `${SPACESHIP_NAME}-${Date.now()}`;
+
+        // Aumentamos ligeramente la sensibilidad del drag para facilitar el escape orbital
+        const dragMultiplier = 2.0;
 
         const spaceshipRender: RenderBody = {
           ...spaceship,
           name: uniqueName,
           x: launchX,
           y: launchY,
-          vx: spaceship.vx + addedVx,
-          vy: spaceship.vy + addedVy,
+          vx: spaceship.vx * dragMultiplier + addedVx,
+          vy: spaceship.vy * dragMultiplier + addedVy,
           mass: 1e-25,
-          radius: 4,
+          radius: 4, // Un poco más visible
           color: '#00ffff',
           launchedFrom,
         };
 
         setBodies([...bodies(), spaceshipRender]);
+
+        // RECUPERADO: El log vuelve a funcionar
+        addLogMessage(
+          `[INFO] Nave lanzada: pos = (${spaceshipRender.x.toFixed(3)}, ${spaceshipRender.y.toFixed(3)}) UA, vel drag = ${(spaceship.vx * dragMultiplier).toFixed(4)} UA/día.`
+        );
       },
       onCancel: () => {
         // Dejar vacío. Si el usuario cancela el drag (con Click derecho o ESC),

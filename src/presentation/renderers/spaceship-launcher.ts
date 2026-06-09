@@ -7,7 +7,6 @@ import {
   dragToVelocity,
 } from "@/shared/types/spaceship";
 import { drawVelocityArrow, drawImpactMessage, clearSpaceshipTrail } from "./draw-spaceship";
-import { maxOrbitAU } from "@/features/simulation/stores/simulation-store";
 
 type OnLaunchCallback = (spaceship: BodyState) => void;
 type OnCancelCallback = () => void;
@@ -120,7 +119,7 @@ export class SpaceshipLauncher {
           const dy = spaceship.y - launcherBody.y;
           const dist = Math.sqrt(dx * dx + dy * dy);
           const baseRadius = (launcherBody as RenderBody).radius ?? 5;
-          const bodyRadiusAU = (baseRadius / 100) * maxOrbitAU();
+          const bodyRadiusAU = baseRadius / this.scale;
 
           if (dist > bodyRadiusAU * 1.5) {
             delete spaceship.launchedFrom;
@@ -138,7 +137,7 @@ export class SpaceshipLauncher {
         const dist = Math.sqrt(dx * dx + dy * dy);
 
         const baseRadius = (body as RenderBody).radius ?? 5;
-        const bodyRadiusAU = (baseRadius / 100) * maxOrbitAU();
+        const bodyRadiusAU = baseRadius / this.scale;
 
         if (dist < bodyRadiusAU) {
           const impactPx = {
