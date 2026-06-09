@@ -59,7 +59,7 @@ const ScreenshotSlot: Component<ScreenshotSlotProps> = (props) => {
               alt={props.alt || props.title}
               loading="lazy"
               decoding="async"
-              style={{ 'view-transition-name': `img-expand-${props.id}` }}
+              style={{ 'view-transition-name': isZoomed() ? 'none' : `img-expand-${props.id}` }}
               onClick={toggleZoom}
               class="max-h-full max-w-full cursor-zoom-in rounded-lg object-contain transition-transform duration-200 hover:scale-[1.02]"
             />

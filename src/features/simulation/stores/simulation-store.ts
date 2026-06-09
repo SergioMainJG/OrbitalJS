@@ -1,4 +1,4 @@
-import { createSignal, createMemo } from "solid-js";
+import { createSignal } from "solid-js";
 import { createStore, reconcile } from "solid-js/store";
 import type { RenderBody } from "@/shared/types";
 import { SOLAR_SYSTEM_SCENARIO } from "@/shared/scenarios/solar-system.scenario";
@@ -19,21 +19,18 @@ const [bodiesStore, setBodiesStore] = createStore<{ list: RenderBody[] }>({
   list: [],
 });
 
-/** Read accessor — compatible with previous bodies() call sites */
 const bodies = (): RenderBody[] => bodiesStore.list;
 
-/** Write accessor — accepts updater fn or direct array, reconciles by name key */
 const setBodies = (next: RenderBody[] | ((prev: RenderBody[]) => RenderBody[])) => {
   const resolved = typeof next === "function" ? next(bodiesStore.list) : next;
   setBodiesStore("list", reconcile(resolved, { key: "name", merge: true }));
 };
 
-export const planetBodies = createMemo(() =>
-  bodiesStore.list.filter((b) => !b.name.startsWith(SPACESHIP_NAME)),
-);
-export const spaceshipBodies = createMemo(() =>
-  bodiesStore.list.filter((b) => b.name.startsWith(SPACESHIP_NAME)),
-);
+export const planetBodies = () =>
+  bodiesStore.list.filter((b) => !b.name.startsWith(SPACESHIP_NAME));
+
+export const spaceshipBodies = () =>
+  bodiesStore.list.filter((b) => b.name.startsWith(SPACESHIP_NAME));
 
 const [currentDay, setCurrentDay] = createSignal(0);
 const [simSpeed, setSimSpeed] = createSignal(1);

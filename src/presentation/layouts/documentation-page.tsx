@@ -263,6 +263,58 @@ const references: ReferenceItem[] = [
   },
 ];
 
+const transfer = (x: number) => {
+  return x > 0.0031308 ? 1.055 * Math.pow(x, 1 / 2.4) - 0.055 : 12.92 * x;
+};
+
+const oklchToRgb = (l: number, c: number, h: number): [number, number, number] => {
+  const hRad = (h * Math.PI) / 180;
+  const a = c * Math.cos(hRad);
+  const b = c * Math.sin(hRad);
+
+  const lPrime = l + 0.3963377774 * a + 0.2158037573 * b;
+  const mPrime = l - 0.1055613458 * a - 0.0638541728 * b;
+  const sPrime = l - 0.0894841775 * a - 1.291485548 * b;
+
+  const l3 = lPrime * lPrime * lPrime;
+  const m3 = mPrime * mPrime * mPrime;
+  const s3 = sPrime * sPrime * sPrime;
+
+  let r = +4.0767416621 * l3 - 3.3077115913 * m3 + 0.2309699292 * s3;
+  let g = -1.2684380046 * l3 + 2.6097574011 * m3 - 0.3413193965 * s3;
+  let bPrime = -0.0041960863 * l3 - 0.7034186147 * m3 + 1.707614701 * s3;
+
+  r = Math.max(0, Math.min(1, transfer(r)));
+  g = Math.max(0, Math.min(1, transfer(g)));
+  bPrime = Math.max(0, Math.min(1, transfer(bPrime)));
+
+  return [Math.round(r * 255), Math.round(g * 255), Math.round(bPrime * 255)];
+};
+
+const parseAndConvertOklch = (colorStr: string): string => {
+  if (!colorStr || !colorStr.includes('oklch')) return colorStr;
+
+  const oklchRegex =
+    /oklch\(\s*([\d.]+%?)\s+([\d.]+)\s+([\d.degread%]+)(?:\s*\/\s*([\d.]+%?))?\s*\)/gi;
+
+  let replaced = colorStr.replace(oklchRegex, (_match, lStr, cStr, hStr, aStr) => {
+    const l = lStr.endsWith('%') ? parseFloat(lStr) / 100 : parseFloat(lStr);
+    const c = parseFloat(cStr);
+    const h = parseFloat(hStr);
+    const a = aStr ? (aStr.endsWith('%') ? parseFloat(aStr) / 100 : parseFloat(aStr)) : 1;
+
+    const [r, g, b] = oklchToRgb(l, c, h);
+    return `rgba(${r}, ${g}, ${b}, ${a})`;
+  });
+
+  if (replaced.includes('oklch')) {
+    const fallbackRegex = /oklch\([^)]+\)/gi;
+    replaced = replaced.replace(fallbackRegex, 'rgba(128, 128, 128, 1)');
+  }
+
+  return replaced;
+};
+
 const DocumentationPage: Component = () => {
   const handleExportPDF = async () => {
     const element = document.getElementById('documento-exportable');
@@ -273,8 +325,119 @@ const DocumentationPage: Component = () => {
     const opt = {
       margin: 1,
       filename: 'documentacion-orbitaljs.pdf',
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 3, useCORS: true },
+      image: { type: 'jpeg' as const, quality: 0.98 },
+      html2canvas: {
+        scale: 3,
+        useCORS: true,
+        onclone: (clonedDoc: Document) => {
+          // Desactivar animaciones y transiciones en el clon
+          const style = clonedDoc.createElement('style');
+          style.innerHTML = `
+            *, *::before, *::after {
+              view-transition-name: none !important;
+              animation: none !important;
+              transition: none !important;
+            }
+          `;
+          clonedDoc.head.appendChild(style);
+
+          // Sobreescribir los colores oklch calculados por valores RGBA legibles en el clon
+          const walk = (orig: Element, clone: Element) => {
+            const compStyle = window.getComputedStyle(orig);
+            const htmlClone = clone as HTMLElement;
+
+            const colorProps = [
+              'color',
+              'background-color',
+              'border-color',
+              'border-top-color',
+              'border-bottom-color',
+              'border-left-color',
+              'border-right-color',
+              'outline-color',
+              'fill',
+              'stroke',
+              'box-shadow',
+              'text-shadow',
+              'background-image',
+              'text-decoration-color',
+            ];
+
+            colorProps.forEach((prop) => {
+              const val = compStyle.getPropertyValue(prop);
+              if (val && val.includes('oklch')) {
+                const priority = compStyle.getPropertyPriority(prop);
+                htmlClone.style.setProperty(prop, parseAndConvertOklch(val), priority);
+              }
+            });
+
+            const origChildren = orig.children;
+            const cloneChildren = clone.children;
+            const len = Math.min(origChildren.length, cloneChildren.length);
+            for (let i = 0; i < len; i++) {
+              const origChild = origChildren[i];
+              const cloneChild = cloneChildren[i];
+              if (origChild && cloneChild) {
+                walk(origChild, cloneChild);
+              }
+            }
+          };
+
+          if (document.documentElement && clonedDoc.documentElement) {
+            walk(document.documentElement, clonedDoc.documentElement);
+          }
+
+          // Convertir todas las reglas de los stylesheets clonados
+          try {
+            for (let i = 0; i < clonedDoc.styleSheets.length; i++) {
+              const sheet = clonedDoc.styleSheets[i];
+              if (!sheet) continue;
+              try {
+                const rules = sheet.cssRules;
+                if (!rules) continue;
+
+                const processRule = (rule: CSSRule) => {
+                  if (rule instanceof CSSStyleRule) {
+                    for (let j = 0; j < rule.style.length; j++) {
+                      const prop = rule.style[j];
+                      if (!prop) continue;
+                      const val = rule.style.getPropertyValue(prop);
+                      if (val && val.includes('oklch')) {
+                        rule.style.setProperty(
+                          prop,
+                          parseAndConvertOklch(val),
+                          rule.style.getPropertyPriority(prop)
+                        );
+                      }
+                    }
+                  } else if (rule instanceof CSSMediaRule || rule instanceof CSSSupportsRule) {
+                    const subRules = rule.cssRules;
+                    if (subRules) {
+                      for (let k = 0; k < subRules.length; k++) {
+                        const subRule = subRules[k];
+                        if (subRule) {
+                          processRule(subRule);
+                        }
+                      }
+                    }
+                  }
+                };
+
+                for (let j = 0; j < rules.length; j++) {
+                  const r = rules[j];
+                  if (r) {
+                    processRule(r);
+                  }
+                }
+              } catch (e) {
+                console.warn('No se pudieron modificar algunas reglas del stylesheet:', e);
+              }
+            }
+          } catch (e) {
+            console.error('Error al modificar styleSheets del clon:', e);
+          }
+        },
+      },
       jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' as const },
     };
 
