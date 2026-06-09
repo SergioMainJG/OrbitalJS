@@ -506,7 +506,7 @@ function SolarSystemCanvas() {
         const uniqueName = `${SPACESHIP_NAME}-${Date.now()}`;
 
         // Aumentamos ligeramente la sensibilidad del drag para facilitar el escape orbital
-        const dragMultiplier = 2.0;
+        const dragMultiplier = 2.5;
 
         const spaceshipRender: RenderBody = {
           ...spaceship,

@@ -6,7 +6,6 @@ import {
   setShowHohmann,
   hohmannParams,
   setHohmannParams,
-  maxOrbitAU,
 } from '../stores/simulation-store';
 import { UNIVERSAL_CONSTS } from '@/shared/constants';
 import { clearSpaceshipTrail } from '@/presentation/renderers/draw-spaceship';
@@ -19,13 +18,17 @@ const KM_S_PER_AU_DAY = 1731.48;
 export const HohmannPanel: Component = () => {
   const [isOpen, setIsOpen] = createSignal(false);
 
-  const isSupportedSystem = () => {
-    return bodies().some((b) => b.name === 'Sun' || b.name === 'Earth');
-  };
-
   const availablePlanets = createMemo(
     () => {
-      return bodies().filter((b) => b.name !== 'Sun' && !b.name.startsWith(SPACESHIP_NAME));
+      return bodies().filter((b) => {
+        if (b.name === 'Sun' || b.name.startsWith(SPACESHIP_NAME)) return false;
+
+        // Descartar el cuerpo central del mapa (su radio orbital es casi 0)
+        const r = Math.sqrt(b.x * b.x + b.y * b.y);
+        if (r < 0.0001) return false;
+
+        return true;
+      });
     },
     [],
     {
@@ -146,9 +149,9 @@ export const HohmannPanel: Component = () => {
     const vxShip = origin.vx + dv1 * tx;
     const vyShip = origin.vy + dv1 * ty;
 
-    // --- CORRECCIÓN DEL RADIO DE ENGANCHE ---
-    // Usar estrictamente un 1% del tamaño del escenario para evitar lanzamientos remotos
-    const offsetDistance = maxOrbitAU() * 0.01;
+    // --- CORRECCIÓN DE SINGULARIDAD GRAVITACIONAL ---
+    // Usamos estrictamente un 0.5% de la distancia orbital para asegurar la salida atmosférica
+    const offsetDistance = calc.r1 * 0.005;
 
     // Si aceleramos (dv1 > 0), nos ponemos por delante. Si frenamos (dv1 < 0), nos ponemos por detrás.
     const sign = dv1 >= 0 ? 1 : -1;
@@ -190,12 +193,20 @@ export const HohmannPanel: Component = () => {
       <Show when={isOpen()}>
         <div class="flex flex-col gap-3 border-t border-slate-700 p-3 text-xs text-slate-300">
           <Show
-            when={isSupportedSystem()}
+            when={availablePlanets().length >= 2}
             fallback={
-              <div class="rounded border border-slate-800 bg-slate-950/40 p-3 text-center leading-relaxed text-slate-400">
-                La transferencia de Hohmann no está disponible en este escenario. Su cálculo
-                matemático asume un sistema de dos cuerpos estables con un centro de gravedad
-                dominante estacionario.
+              <div class="rounded border border-yellow-700/50 bg-yellow-900/20 p-2 leading-relaxed text-yellow-500/90">
+                La transferencia de Hohmann es una maniobra matemática de{' '}
+                <strong>órbita a órbita</strong>.<br />
+                <br />
+                En este mapa, tu cuerpo de origen actúa como el centro estacionario de gravedad, por
+                lo que no es posible ejecutar esta maniobra desde su núcleo.
+                <br />
+                <br />
+                <em>
+                  Utiliza el lanzamiento manual (Drag) para lanzar cohetes desde la superficie hacia
+                  los satélites.
+                </em>
               </div>
             }
           >
