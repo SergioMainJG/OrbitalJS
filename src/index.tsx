@@ -1,8 +1,9 @@
 import { render } from 'solid-js/web';
+import { Router } from '@solidjs/router';
 // oxlint-disable-next-line import/no-unassigned-import
-import './index.css'; // This import is require if we want to apply tailwind in the project
+import './index.css';
 
-import { OrbitalJS } from './orbita-js';
+import { AppRoutes } from './orbita-js';
 
 const root = document.getElementById('root');
 
@@ -12,4 +13,11 @@ if (import.meta.env.DEV && !(root instanceof HTMLElement)) {
   );
 }
 
-render(() => <OrbitalJS />, root!);
+render(
+  () => (
+    <Router>
+      <AppRoutes />
+    </Router>
+  ),
+  root!
+);

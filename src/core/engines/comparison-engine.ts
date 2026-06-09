@@ -56,8 +56,8 @@ export function tickComparison(state: ComparisonState, dt = 1): ComparisonState 
  */
 export function makeEmptyComparisonState(bodies: BodyState[]): ComparisonState {
   return {
-    eulerBodies: structuredClone(bodies),
-    rk4Bodies: structuredClone(bodies),
+    eulerBodies: bodies.map((b) => ({ ...b })),
+    rk4Bodies: bodies.map((b) => ({ ...b })),
     eulerTrails: bodies.map(() => [] as TrailPoint[]),
     rk4Trails: bodies.map(() => [] as TrailPoint[]),
     step: 0,

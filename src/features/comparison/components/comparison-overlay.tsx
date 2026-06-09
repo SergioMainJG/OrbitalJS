@@ -6,7 +6,7 @@ const ComparisonOverlay: Component = () => {
   return (
     <Show when={isComparing()}>
       <div
-        class="bg-base-100/80 pointer-events-none absolute top-3 right-3 flex flex-col gap-1.5 rounded-xl px-4 py-3 text-xs shadow-lg backdrop-blur-sm"
+        class="bg-base-100/80 pointer-events-none absolute top-14 right-3 flex flex-col gap-1.5 rounded-xl px-4 py-3 text-xs shadow-lg backdrop-blur-sm"
         role="status"
         aria-label="Leyenda modo comparación"
       >

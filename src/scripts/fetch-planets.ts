@@ -83,7 +83,7 @@ async function main(): Promise<void> {
     planets,
   };
 
-  // 4. Escribir a disco
+  // 4. Escribir a disco — mkdir ensures parent dir exists, writeFile writes the JSON
   await mkdir(join(dir, "..", "data"), { recursive: true });
   await writeFile(OUTPUT_PATH, JSON.stringify(output, null, 2), "utf-8");
 

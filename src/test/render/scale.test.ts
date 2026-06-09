@@ -157,14 +157,18 @@ describe("drawPlanets", () => {
       expect(stroke.mock.calls.length).toBeGreaterThanOrEqual(4);
     });
 
-    it("stabilizes at 199 trail strokes per render after hitting the 200-point cap", () => {
+    it("stabilizes at ≤40 trail strokes per render after hitting the 200-point cap (bucket batching BUCKET_SIZE=5)", () => {
       const { ctx, stroke } = createTrackedCtx();
 
       for (let i = 0; i < 200; i++) drawBodies(ctx, [EARTH], 100, 400 + i * 0.1, 300);
       const strokesAtCap = stroke.mock.calls.length;
 
       for (let i = 200; i < 210; i++) drawBodies(ctx, [EARTH], 100, 400 + i * 0.1, 300);
-      expect(stroke.mock.calls.length - strokesAtCap).toBe(10 * 199);
+      // With BUCKET_SIZE=5: 199 segments → ceil(199/5) = 40 strokes per render
+      // 10 renders × 40 strokes = 400 total (instead of 10 × 199 = 1990 pre-batching)
+      const BUCKET_SIZE = 5;
+      const expectedStrokesPerRender = Math.ceil(199 / BUCKET_SIZE);
+      expect(stroke.mock.calls.length - strokesAtCap).toBe(10 * expectedStrokesPerRender);
     });
   });
 

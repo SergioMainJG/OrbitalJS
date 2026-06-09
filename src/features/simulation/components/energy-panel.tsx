@@ -1,16 +1,12 @@
-import { type Component, createEffect, createSignal, onCleanup, onMount, Show } from 'solid-js';
 import {
-  Chart,
-  LineController,
-  LineElement,
-  PointElement,
-  LinearScale,
-  Tooltip,
-  Legend,
-  type ChartData,
-  type ChartOptions,
-  CategoryScale,
-} from 'chart.js';
+  type Component,
+  createDeferred,
+  createEffect,
+  createSignal,
+  onCleanup,
+  onMount,
+  Show,
+} from 'solid-js';
 import { kineticEnergy, potentialEnergy, totalEnergy } from '@/core/physics';
 import { energyDrift, getDriftStatus } from '@/core/diagnostics/energy-monitor';
 import type { DriftStatus, EnergyPanelProps, EnergySnapshot } from '@/shared/types';
@@ -19,15 +15,7 @@ import { setTooltip } from '@/presentation/shared-components/tooltip-store';
 import { ENERGY_PANEL_TOOLTIP } from '@/shared/constants/math-explanations';
 import { addLogMessage } from '../stores/simulation-store';
 
-Chart.register(
-  LineController,
-  LineElement,
-  PointElement,
-  LinearScale,
-  CategoryScale,
-  Tooltip,
-  Legend
-);
+import type { Chart as ChartType } from 'chart.js';
 
 const MAX_HISTORY = 300;
 
@@ -39,7 +27,7 @@ const STATUS_STYLES: Record<DriftStatus, { badge: string; label: string }> = {
 
 export const EnergyPanelComponent: Component<EnergyPanelProps> = (props) => {
   let canvasRef: HTMLCanvasElement | undefined;
-  let chart: Chart | null = null;
+  let chart: ChartType<'line'> | null = null;
 
   const [history, setHistory] = createSignal<EnergySnapshot[]>([]);
   const [initialEnergy, setInitialEnergy] = createSignal<number | null>(null);
@@ -102,15 +90,38 @@ export const EnergyPanelComponent: Component<EnergyPanelProps> = (props) => {
     }
   });
 
-  onMount(() => {
+  const deferredHistory = createDeferred(history, { timeoutMs: 200 });
+
+  onMount(async () => {
     if (!canvasRef) return;
 
-    const data: ChartData<'line'> = {
-      labels: [],
+    const {
+      Chart,
+      LineController,
+      LineElement,
+      PointElement,
+      LinearScale,
+      Tooltip,
+      Legend,
+      CategoryScale,
+    } = await import('chart.js');
+
+    Chart.register(
+      LineController,
+      LineElement,
+      PointElement,
+      LinearScale,
+      CategoryScale,
+      Tooltip,
+      Legend
+    );
+
+    const data = {
+      labels: [] as string[],
       datasets: [
         {
           label: 'E. cinetica',
-          data: [],
+          data: [] as number[],
           borderColor: SERIES_COLORS.kinetic,
           backgroundColor: `${SERIES_COLORS.kinetic}22`,
           borderWidth: 1.5,
@@ -119,7 +130,7 @@ export const EnergyPanelComponent: Component<EnergyPanelProps> = (props) => {
         },
         {
           label: 'E. potencial',
-          data: [],
+          data: [] as number[],
           borderColor: SERIES_COLORS.potential,
           backgroundColor: `${SERIES_COLORS.potential}22`,
           borderWidth: 1.5,
@@ -128,7 +139,7 @@ export const EnergyPanelComponent: Component<EnergyPanelProps> = (props) => {
         },
         {
           label: 'E. total',
-          data: [],
+          data: [] as number[],
           borderColor: SERIES_COLORS.total,
           backgroundColor: `${SERIES_COLORS.total}22`,
           borderWidth: 2,
@@ -138,11 +149,11 @@ export const EnergyPanelComponent: Component<EnergyPanelProps> = (props) => {
       ],
     };
 
-    const options: ChartOptions<'line'> = {
+    const options = {
       responsive: true,
       maintainAspectRatio: false,
-      animation: false,
-      interaction: { mode: 'index', intersect: false },
+      animation: false as const,
+      interaction: { mode: 'index' as const, intersect: false },
       plugins: {
         legend: {
           labels: {
@@ -156,9 +167,10 @@ export const EnergyPanelComponent: Component<EnergyPanelProps> = (props) => {
           titleColor: '#94a3b8',
           bodyColor: '#e2e8f0',
           callbacks: {
-            title: (items) => `Dia ${items[0]?.label ?? ''}`,
-            label: (item) =>
-              ` ${item.dataset.label}: ${(item.parsed.y as number).toExponential(4)}`,
+            title: (items: { label?: string }[]) => `Dia ${items[0]?.label ?? ''}`,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            label: (item: any) =>
+              ` ${item.dataset.label as string}: ${(item.parsed.y as number).toExponential(4)}`,
           },
         },
       },
@@ -177,7 +189,7 @@ export const EnergyPanelComponent: Component<EnergyPanelProps> = (props) => {
           ticks: {
             color: '#64748b',
             font: { size: 10 },
-            callback: (v) => (v as number).toExponential(2),
+            callback: (v: string | number) => (v as number).toExponential(2),
           },
           grid: { color: '#1e293b' },
           title: { display: true, text: 'Energia (u. arb.)', color: '#64748b', font: { size: 10 } },
@@ -185,11 +197,11 @@ export const EnergyPanelComponent: Component<EnergyPanelProps> = (props) => {
       },
     };
 
-    chart = new Chart(canvasRef, { type: 'line', data, options });
+    chart = new Chart(canvasRef, { type: 'line', data, options }) as ChartType<'line'>;
   });
 
   createEffect(() => {
-    const h = history();
+    const h = deferredHistory();
     if (!chart) return;
 
     chart.data.labels = h.map((s) => String(s.day));
@@ -206,6 +218,14 @@ export const EnergyPanelComponent: Component<EnergyPanelProps> = (props) => {
 
   return (
     <div class="bg-base-100/90 flex flex-col gap-3 rounded-2xl p-4 shadow-xl backdrop-blur-sm">
+      {/* Hidden live region — announces energy drift alerts to screen readers */}
+      <div role="status" aria-live="assertive" aria-atomic="true" class="sr-only">
+        <Show when={status() === 'red'}>
+          Advertencia: deriva de energía alta, {drift().toFixed(2)}%. El integrador necesita un paso
+          temporal más pequeño.
+        </Show>
+      </div>
+
       <div class="flex items-center justify-between">
         <h2 class="text-sm font-semibold tracking-wide text-slate-300">Monitor de Energia</h2>
         <div class="flex items-center gap-2">
@@ -220,7 +240,7 @@ export const EnergyPanelComponent: Component<EnergyPanelProps> = (props) => {
               });
             }}
             onMouseLeave={() => setTooltip(null)}
-            class="flex h-5 w-5 cursor-help items-center justify-center rounded-full border border-slate-600 text-[11px] text-slate-400 transition-colors hover:border-yellow-400 hover:text-yellow-400"
+            class="flex h-5 w-5 cursor-help items-center justify-center rounded-full border border-slate-600 text-[11px] text-slate-300 transition-colors hover:border-yellow-400 hover:text-yellow-400"
           >
             i
           </button>
@@ -250,7 +270,7 @@ export const EnergyPanelComponent: Component<EnergyPanelProps> = (props) => {
           {drift().toFixed(4)}
           <span class="text-lg font-normal opacity-70">%</span>
         </span>
-        <span class="mt-1 text-xs text-slate-500">|E(t) − E(0)| / |E(0)| × 100</span>
+        <span class="mt-1 text-xs text-slate-400">|E(t) − E(0)| / |E(0)| × 100</span>
       </div>
 
       <Show when={status() === 'red'}>
@@ -285,7 +305,7 @@ export const EnergyPanelComponent: Component<EnergyPanelProps> = (props) => {
           role="img"
         />
         <Show when={history().length === 0}>
-          <div class="absolute inset-0 flex items-center justify-center text-xs text-slate-500">
+          <div class="absolute inset-0 flex items-center justify-center text-xs text-slate-400">
             Esperando datos de simulacion...
           </div>
         </Show>
@@ -295,7 +315,7 @@ export const EnergyPanelComponent: Component<EnergyPanelProps> = (props) => {
         {(snap) => (
           <dl class="grid grid-cols-3 gap-1 text-center text-xs">
             <div class="rounded-lg bg-slate-800/60 px-2 py-1.5">
-              <dt class="text-slate-500">Ecin</dt>
+              <dt class="text-slate-400">Ecin</dt>
               <dd
                 class="font-mono font-semibold tabular-nums"
                 style={{ color: SERIES_COLORS.kinetic }}
@@ -304,7 +324,7 @@ export const EnergyPanelComponent: Component<EnergyPanelProps> = (props) => {
               </dd>
             </div>
             <div class="rounded-lg bg-slate-800/60 px-2 py-1.5">
-              <dt class="text-slate-500">Epot</dt>
+              <dt class="text-slate-400">Epot</dt>
               <dd
                 class="font-mono font-semibold tabular-nums"
                 style={{ color: SERIES_COLORS.potential }}
@@ -313,7 +333,7 @@ export const EnergyPanelComponent: Component<EnergyPanelProps> = (props) => {
               </dd>
             </div>
             <div class="rounded-lg bg-slate-800/60 px-2 py-1.5">
-              <dt class="text-slate-500">Etotal</dt>
+              <dt class="text-slate-400">Etotal</dt>
               <dd
                 class="font-mono font-semibold tabular-nums"
                 style={{ color: SERIES_COLORS.total }}

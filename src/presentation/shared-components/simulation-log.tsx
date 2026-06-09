@@ -9,7 +9,13 @@ const assignColor = (msg: string): string => {
 
 const SimulationLog: Component = () => {
   return (
-    <div class="flex h-[160px] min-h-[140px] w-full flex-col overflow-hidden rounded-xl border border-slate-800 bg-[#13132a] px-3.5 py-2.5 lg:col-start-2 lg:row-start-2 lg:h-full lg:min-h-0">
+    <div
+      class="flex h-[160px] min-h-[140px] w-full flex-col overflow-hidden rounded-xl border border-slate-800 bg-[#13132a] px-3.5 py-2.5 lg:col-start-2 lg:row-start-2 lg:h-full lg:min-h-0"
+      role="log"
+      aria-label="Log de simulación"
+      aria-live="polite"
+      aria-relevant="additions"
+    >
       <span class="mb-1.5 text-[10px] font-semibold tracking-widest text-slate-400 uppercase">
         Log de Simulación
       </span>

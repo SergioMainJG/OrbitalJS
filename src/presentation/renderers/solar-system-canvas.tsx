@@ -1,4 +1,4 @@
-import { onMount, onCleanup, createEffect } from 'solid-js';
+import { onMount, onCleanup, createEffect, batch, untrack } from 'solid-js';
 import { CanvasRenderer } from './canvas-renderer';
 import { AnimationLoop } from '@/core/engines/animation-loop';
 import { rendererRegistry } from '@/application/registries/renderer-registry';
@@ -22,6 +22,7 @@ import {
   showHohmann,
   hohmannParams,
   addLogMessage,
+  setIsRunning,
 } from '@/features/simulation/stores/simulation-store';
 import { setTooltip } from '@/presentation/shared-components/tooltip-store';
 import { getHoveredBody } from './body-hit-test';
@@ -57,19 +58,23 @@ function drawComparisonTrails(
 ): void {
   const state = comparisonState;
 
-  // RK4 trails — solid blue
+  const BUCKET_SIZE = 5;
+
   for (const trail of state.rk4Trails) {
     if (trail.length < 2) continue;
     ctx.save();
     ctx.setLineDash([]);
     ctx.lineWidth = STYLES.rk4.lineWidth;
-    for (let i = 1; i < trail.length; i++) {
-      const opacity = i / trail.length;
+    for (let i = 1; i < trail.length; i += BUCKET_SIZE) {
+      const bucketEnd = Math.min(i + BUCKET_SIZE, trail.length);
+      const opacity = (i + Math.floor(BUCKET_SIZE / 2)) / trail.length;
       const prev = trail[i - 1]!;
-      const curr = trail[i]!;
       ctx.beginPath();
       ctx.moveTo(cx + prev.x * scale, cy - prev.y * scale);
-      ctx.lineTo(cx + curr.x * scale, cy - curr.y * scale);
+      for (let j = i; j < bucketEnd; j++) {
+        const curr = trail[j]!;
+        ctx.lineTo(cx + curr.x * scale, cy - curr.y * scale);
+      }
       ctx.strokeStyle = `${COLORS.rk4}${Math.floor(opacity * 200)
         .toString(16)
         .padStart(2, '0')}`;
@@ -78,19 +83,21 @@ function drawComparisonTrails(
     ctx.restore();
   }
 
-  // Euler trails — dashed red
   for (const trail of state.eulerTrails) {
     if (trail.length < 2) continue;
     ctx.save();
     ctx.setLineDash([4, 3]);
     ctx.lineWidth = STYLES.euler.lineWidth;
-    for (let i = 1; i < trail.length; i++) {
-      const opacity = i / trail.length;
+    for (let i = 1; i < trail.length; i += BUCKET_SIZE) {
+      const bucketEnd = Math.min(i + BUCKET_SIZE, trail.length);
+      const opacity = (i + Math.floor(BUCKET_SIZE / 2)) / trail.length;
       const prev = trail[i - 1]!;
-      const curr = trail[i]!;
       ctx.beginPath();
       ctx.moveTo(cx + prev.x * scale, cy - prev.y * scale);
-      ctx.lineTo(cx + curr.x * scale, cy - curr.y * scale);
+      for (let j = i; j < bucketEnd; j++) {
+        const curr = trail[j]!;
+        ctx.lineTo(cx + curr.x * scale, cy - curr.y * scale);
+      }
       ctx.strokeStyle = `${COLORS.euler}${Math.floor(opacity * 200)
         .toString(16)
         .padStart(2, '0')}`;
@@ -99,7 +106,6 @@ function drawComparisonTrails(
     ctx.restore();
   }
 
-  // Current body dots
   for (const body of state.rk4Bodies) {
     const px = cx + body.x * scale;
     const py = cy - body.y * scale;
@@ -137,6 +143,11 @@ function SolarSystemCanvas() {
   let startX = 0;
   let startY = 0;
 
+  let lastTouchDist = 0;
+  let lastTouchX = 0;
+  let lastTouchY = 0;
+  let isTouchZooming = false;
+
   const updatePhysics = (_wallDt: number) => {
     if (!isRunning()) return;
 
@@ -147,50 +158,52 @@ function SolarSystemCanvas() {
     const maxDt = currentIntegrator === 'Euler' ? MAX_DT_EULER : MAX_DT_RK4;
     const simDt = Math.min(rawDt, maxDt);
 
-    setBodies((prev) => {
-      const next = simulationRuntime.tick(prev, simDt);
-      return next.map((b: BodyState, i: number) => {
-        const prevBody = prev[i]!;
-        const nextBody = { ...prevBody, ...b } as RenderBody;
+    batch(() => {
+      setBodies((prev) => {
+        const next = simulationRuntime.tick(prev, simDt);
+        return next.map((b: BodyState, i: number) => {
+          const prevBody = prev[i]!;
+          const nextBody = { ...prevBody, ...b } as RenderBody;
 
-        if (nextBody.name.startsWith(SPACESHIP_NAME) && nextBody.hohmannDv2Applied === false) {
-          const r = Math.sqrt(nextBody.x * nextBody.x + nextBody.y * nextBody.y);
-          const direction = nextBody.hohmannDirection as 'out' | 'in';
+          if (nextBody.name.startsWith(SPACESHIP_NAME) && nextBody.hohmannDv2Applied === false) {
+            const r = Math.sqrt(nextBody.x * nextBody.x + nextBody.y * nextBody.y);
+            const direction = nextBody.hohmannDirection as 'out' | 'in';
 
-          const radialVel = (nextBody.x * nextBody.vx + nextBody.y * nextBody.vy) / r;
-          const prevRadialVel = nextBody.hohmannPrevRadialVel ?? radialVel;
-          nextBody.hohmannPrevRadialVel = radialVel;
+            const radialVel = (nextBody.x * nextBody.vx + nextBody.y * nextBody.vy) / r;
+            const prevRadialVel = nextBody.hohmannPrevRadialVel ?? radialVel;
+            nextBody.hohmannPrevRadialVel = radialVel;
 
-          let triggered = false;
-          if (direction === 'out' && prevRadialVel > 0 && radialVel <= 0) {
-            triggered = true;
-          } else if (direction === 'in' && prevRadialVel < 0 && radialVel >= 0) {
-            triggered = true;
-          }
+            let triggered = false;
+            if (direction === 'out' && prevRadialVel > 0 && radialVel <= 0) {
+              triggered = true;
+            } else if (direction === 'in' && prevRadialVel < 0 && radialVel >= 0) {
+              triggered = true;
+            }
 
-          if (triggered) {
-            const vSpeed = Math.sqrt(nextBody.vx * nextBody.vx + nextBody.vy * nextBody.vy);
-            if (vSpeed > 0) {
-              const tx = nextBody.vx / vSpeed;
-              const ty = nextBody.vy / vSpeed;
-              const dv2 = nextBody.hohmannDv2Val as number;
+            if (triggered) {
+              const vSpeed = Math.sqrt(nextBody.vx * nextBody.vx + nextBody.vy * nextBody.vy);
+              if (vSpeed > 0) {
+                const tx = nextBody.vx / vSpeed;
+                const ty = nextBody.vy / vSpeed;
+                const dv2 = nextBody.hohmannDv2Val as number;
 
-              nextBody.vx += dv2 * tx;
-              nextBody.vy += dv2 * ty;
-              nextBody.hohmannDv2Applied = true;
+                nextBody.vx += dv2 * tx;
+                nextBody.vy += dv2 * ty;
+                nextBody.hohmannDv2Applied = true;
 
-              const dv2KmS = dv2 * 1731.48;
-              addLogMessage(
-                `[INFO] Hohmann: Segundo impulso (Δv₂ = ${dv2KmS.toFixed(2)} km/s) aplicado. Órbita circularizada.`
-              );
+                const dv2KmS = dv2 * 1731.48;
+                addLogMessage(
+                  `[INFO] Hohmann: Segundo impulso (Δv₂ = ${dv2KmS.toFixed(2)} km/s) aplicado. Órbita circularizada.`
+                );
+              }
             }
           }
-        }
-        return nextBody;
+          return nextBody;
+        });
       });
-    });
 
-    setCurrentDay((d) => d + simDt);
+      setCurrentDay((d) => d + simDt);
+    });
 
     if (isComparing()) {
       tickComparison(Math.min(rawDt, MAX_DT_EULER));
@@ -213,7 +226,8 @@ function SolarSystemCanvas() {
     const camera = renderer.getCamera();
     let scale = camera.scale;
 
-    const ships = bodies().filter((b) => b.name.startsWith(SPACESHIP_NAME));
+    const currentBodies = untrack(bodies);
+    const ships = currentBodies.filter((b) => b.name.startsWith(SPACESHIP_NAME));
 
     if (followSpaceship() && ships.length > 0) {
       const ship = ships[ships.length - 1] as RenderBody;
@@ -231,15 +245,15 @@ function SolarSystemCanvas() {
     const { cx, cy } = camera.getCenter();
     launcher?.updateTransform(scale, cx, cy);
 
-    renderer.render(buildScene(bodies(), dt(), currentDay()), showOrbit());
+    renderer.render(buildScene(currentBodies, dt(), currentDay()), showOrbit());
 
     if (isComparing()) {
       drawComparisonTrails(ctx, scale, cx, cy);
     }
 
     if (showLagrange()) {
-      const sun = bodies().find((b) => b.name === 'Sun');
-      const earth = bodies().find((b) => b.name === 'Earth');
+      const sun = currentBodies.find((b) => b.name === 'Sun');
+      const earth = currentBodies.find((b) => b.name === 'Earth');
       if (sun && earth) {
         const dx = earth.x - sun.x;
         const dy = earth.y - sun.y;
@@ -295,8 +309,8 @@ function SolarSystemCanvas() {
 
     if (showHohmann()) {
       const params = hohmannParams();
-      const originBody = bodies().find((b) => b.name === params.origin);
-      const targetBody = bodies().find((b) => b.name === params.target);
+      const originBody = currentBodies.find((b) => b.name === params.origin);
+      const targetBody = currentBodies.find((b) => b.name === params.target);
       if (originBody && targetBody && originBody.name !== targetBody.name) {
         const r1 = Math.sqrt(originBody.x * originBody.x + originBody.y * originBody.y);
         const r2 = Math.sqrt(targetBody.x * targetBody.x + targetBody.y * targetBody.y);
@@ -341,7 +355,7 @@ function SolarSystemCanvas() {
     ctx.restore();
 
     for (const ship of ships) {
-      drawSpaceship(ctx, ship, scale, cx, cy, showTrajectory());
+      drawSpaceship(ctx, ship as RenderBody, scale, cx, cy, showTrajectory());
     }
 
     launcher?.drawOverlay();
@@ -406,7 +420,7 @@ function SolarSystemCanvas() {
     const scale = camera.scale;
     const { cx, cy } = camera.getCenter();
 
-    const hoveredPlanet = getHoveredBody(mouseX, mouseY, bodies(), scale, cx, cy);
+    const hoveredPlanet = getHoveredBody(mouseX, mouseY, untrack(bodies), scale, cx, cy);
 
     if (hoveredPlanet) {
       const energy = orbitalEnergy(hoveredPlanet);
@@ -531,6 +545,9 @@ function SolarSystemCanvas() {
       launcher;
 
     canvasRef.addEventListener('wheel', handleWheel, { passive: false });
+    canvasRef.addEventListener('touchstart', handleTouchStart, { passive: false });
+    canvasRef.addEventListener('touchmove', handleTouchMove, { passive: false });
+    canvasRef.addEventListener('touchend', handleTouchEnd);
 
     animationLoop = new AnimationLoop(updatePhysics, renderScene);
     animationLoop.start();
@@ -544,9 +561,18 @@ function SolarSystemCanvas() {
     });
 
     createEffect(() => {
-      const b = bodies();
+      // Track visual options to trigger re-renders when paused
+      bodies();
+      isComparing();
+      showLagrange();
+      showHohmann();
+      showOrbit();
+      showTrajectory();
+      followSpaceship();
+      currentDay();
+
       if (!isRunning() && renderer) {
-        renderer.render(buildScene(b, dt(), currentDay()));
+        renderScene();
       }
     });
 
@@ -558,6 +584,9 @@ function SolarSystemCanvas() {
     onCleanup(() => {
       if (canvasRef) {
         canvasRef.removeEventListener('wheel', handleWheel);
+        canvasRef.removeEventListener('touchstart', handleTouchStart);
+        canvasRef.removeEventListener('touchmove', handleTouchMove);
+        canvasRef.removeEventListener('touchend', handleTouchEnd);
       }
       animationLoop?.stop();
       launcher?.destroy();
@@ -577,6 +606,66 @@ function SolarSystemCanvas() {
   const handleMouseUp = () => {
     if (isPanning) {
       isPanning = false;
+    }
+  };
+
+  const handleTouchStart = (e: TouchEvent) => {
+    if (e.touches.length === 2) {
+      isTouchZooming = true;
+      const t0 = e.touches[0]!;
+      const t1 = e.touches[1]!;
+      const dx = t0.clientX - t1.clientX;
+      const dy = t0.clientY - t1.clientY;
+      lastTouchDist = Math.sqrt(dx * dx + dy * dy);
+      lastTouchX = (t0.clientX + t1.clientX) / 2;
+      lastTouchY = (t0.clientY + t1.clientY) / 2;
+      e.preventDefault();
+    }
+  };
+
+  const handleTouchMove = (e: TouchEvent) => {
+    if (isTouchZooming && e.touches.length === 2 && renderer) {
+      e.preventDefault();
+      const t0 = e.touches[0]!;
+      const t1 = e.touches[1]!;
+
+      const dx = t0.clientX - t1.clientX;
+      const dy = t0.clientY - t1.clientY;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      const midX = (t0.clientX + t1.clientX) / 2;
+      const midY = (t0.clientY + t1.clientY) / 2;
+
+      const rect = canvasRef!.getBoundingClientRect();
+      const localMidX = midX - rect.left;
+      const localMidY = midY - rect.top;
+
+      const camera = renderer.getCamera();
+
+      if (lastTouchDist > 0 && dist > 0) {
+        const zoomFactor = dist / lastTouchDist;
+        const clampedZoom = Math.max(0.8, Math.min(1.25, zoomFactor));
+        camera.zoom(clampedZoom, localMidX, localMidY);
+      }
+
+      const deltaX = midX - lastTouchX;
+      const deltaY = midY - lastTouchY;
+      camera.pan(deltaX, deltaY);
+
+      lastTouchDist = dist;
+      lastTouchX = midX;
+      lastTouchY = midY;
+
+      const { cx, cy } = camera.getCenter();
+      launcher?.updateTransform(camera.scale, cx, cy);
+      renderScene();
+    }
+  };
+
+  const handleTouchEnd = (e: TouchEvent) => {
+    if (e.touches.length < 2) {
+      isTouchZooming = false;
+      lastTouchDist = 0;
     }
   };
 
@@ -619,6 +708,50 @@ function SolarSystemCanvas() {
     renderScene();
   };
 
+  const handleCanvasKeyDown = (e: KeyboardEvent) => {
+    if (!renderer) return;
+    const camera = renderer.getCamera();
+    switch (e.key) {
+      case '+':
+      case '=':
+        camera.zoom(1.3, canvasWidth / 2, canvasHeight / 2);
+        renderScene();
+        break;
+      case '-':
+        camera.zoom(1 / 1.3, canvasWidth / 2, canvasHeight / 2);
+        renderScene();
+        break;
+      case '0':
+        camera.autoScale(MAX_ORBIT_AU);
+        renderScene();
+        break;
+      case 'ArrowLeft':
+        camera.pan(-30, 0);
+        renderScene();
+        break;
+      case 'ArrowRight':
+        camera.pan(30, 0);
+        renderScene();
+        break;
+      case 'ArrowUp':
+        camera.pan(0, -30);
+        renderScene();
+        break;
+      case 'ArrowDown':
+        camera.pan(0, 30);
+        renderScene();
+        break;
+      case ' ':
+        setIsRunning(!isRunning());
+        e.preventDefault();
+        break;
+      default:
+        return;
+    }
+    const { cx, cy } = camera.getCenter();
+    launcher?.updateTransform(camera.scale, cx, cy);
+  };
+
   return (
     <div
       ref={(el) => {
@@ -634,28 +767,32 @@ function SolarSystemCanvas() {
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseLeave}
-        class="block h-full w-full"
+        onKeyDown={handleCanvasKeyDown}
+        role="img"
+        aria-label={`Simulación orbital. ${bodies().length} cuerpos. Día ${currentDay().toFixed(0)}. ${isRunning() ? 'En ejecución' : 'Pausado'}.`}
+        tabIndex={0}
+        class="block h-full w-full touch-none"
       />
 
       <div class="absolute right-3 bottom-3 z-10 flex flex-col gap-1 rounded-lg border border-slate-800 bg-slate-950/80 p-1 shadow-lg backdrop-blur-md">
         <button
           onClick={() => handleZoomButton(1.3)}
           class="flex h-7 w-7 items-center justify-center rounded bg-slate-900 text-sm font-bold text-slate-200 transition-colors hover:bg-slate-800 hover:text-white"
-          title="Acercar (Zoom In)"
+          aria-label="Acercar zoom"
         >
           ＋
         </button>
         <button
           onClick={() => handleZoomButton(1 / 1.3)}
           class="flex h-7 w-7 items-center justify-center rounded bg-slate-900 text-sm font-bold text-slate-200 transition-colors hover:bg-slate-800 hover:text-white"
-          title="Alejar (Zoom Out)"
+          aria-label="Alejar zoom"
         >
           －
         </button>
         <button
           onClick={handleResetZoom}
           class="flex h-7 w-7 items-center justify-center rounded bg-slate-900 text-sm font-bold text-slate-200 transition-colors hover:bg-slate-800 hover:text-white"
-          title="Centrar / Reset Zoom"
+          aria-label="Restablecer zoom al estado inicial"
         >
           ⌖
         </button>

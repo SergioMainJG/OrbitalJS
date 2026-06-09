@@ -44,7 +44,6 @@ const SimulationControls: Component = () => {
   const handleReset = () => {
     setIsRunning(false);
 
-    // Reset based on selected scenario
     const id = selectedScenario();
     if (id === 'solar-system-full') {
       loadScenario(SOLAR_SYSTEM_SCENARIO);
@@ -230,6 +229,8 @@ const SimulationControls: Component = () => {
           value={SPEEDS.indexOf(simSpeed())}
           onInput={(e) => setSimSpeed(SPEEDS[Number(e.currentTarget.value)] ?? 1)}
           disabled={isLoading()}
+          aria-label="Velocidad de simulación"
+          aria-valuetext={`${simSpeed()}x velocidad`}
           class="w-full accent-yellow-400 disabled:opacity-50"
         />
         <div class="flex justify-between text-[9px] text-slate-500">
@@ -254,6 +255,7 @@ const SimulationControls: Component = () => {
                 addLogMessage(`[INFO] Integrador cambiado a: ${name}`);
               }}
               disabled={isLoading()}
+              aria-pressed={integrator() === name}
               class={`flex-1 rounded px-2 py-1 text-xs disabled:opacity-50 ${
                 integrator() === name
                   ? 'bg-blue-600 text-white'

@@ -1,12 +1,13 @@
-import { createSignal } from "solid-js";
+import { createSignal, createMemo } from "solid-js";
+import { createStore, reconcile } from "solid-js/store";
 import type { RenderBody } from "@/shared/types";
 import { SOLAR_SYSTEM_SCENARIO } from "@/shared/scenarios/solar-system.scenario";
+import { SPACESHIP_NAME } from "@/shared/types/spaceship";
 
 const [maxOrbitAU, setMaxOrbitAU] = createSignal(2.0);
 export { maxOrbitAU, setMaxOrbitAU };
 export const MAX_ORBIT_AU = 2.0;
 
-// Scenario bodies without rendering properties — these are injected by loadScenario use-case
 const rawScenarioBodies = SOLAR_SYSTEM_SCENARIO.bodies;
 
 export const EARTH_INITIAL_POS = {
@@ -14,8 +15,26 @@ export const EARTH_INITIAL_POS = {
   y: rawScenarioBodies.find((b) => b.name === "Earth")?.y ?? 0.0,
 };
 
-// Initial bodies start as the raw scenario bodies; loadScenario() applies rendering properties
-const [bodies, setBodies] = createSignal<RenderBody[]>([]);
+const [bodiesStore, setBodiesStore] = createStore<{ list: RenderBody[] }>({
+  list: [],
+});
+
+/** Read accessor — compatible with previous bodies() call sites */
+const bodies = (): RenderBody[] => bodiesStore.list;
+
+/** Write accessor — accepts updater fn or direct array, reconciles by name key */
+const setBodies = (next: RenderBody[] | ((prev: RenderBody[]) => RenderBody[])) => {
+  const resolved = typeof next === "function" ? next(bodiesStore.list) : next;
+  setBodiesStore("list", reconcile(resolved, { key: "name", merge: true }));
+};
+
+export const planetBodies = createMemo(() =>
+  bodiesStore.list.filter((b) => !b.name.startsWith(SPACESHIP_NAME)),
+);
+export const spaceshipBodies = createMemo(() =>
+  bodiesStore.list.filter((b) => b.name.startsWith(SPACESHIP_NAME)),
+);
+
 const [currentDay, setCurrentDay] = createSignal(0);
 const [simSpeed, setSimSpeed] = createSignal(1);
 const [showOrbit, setShowOrbit] = createSignal(true);
@@ -30,7 +49,6 @@ const [logMessages, setLogMessages] = createSignal<string[]>([
   "[INFO] Sistema Solar: Sol + 4 planetas interiores (NASA J2000)",
 ]);
 
-// New signals for Hohmann, Lagrange, and Camera Follow features
 const [followSpaceship, setFollowSpaceship] = createSignal(false);
 const [showLagrange, setShowLagrange] = createSignal(false);
 const [showHohmann, setShowHohmann] = createSignal(false);

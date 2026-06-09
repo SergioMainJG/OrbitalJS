@@ -9,9 +9,10 @@
     "build": "bun x vite build",
     "serve": "bun x vite preview",
     "test": "bun x vitest",
-    "test:ci": "bun x vitest run",
+    "test:ci": "bun x vitest run --bail 1 --reporter=verbose",
     "test:coverage": "bun x vitest run --coverage",
     "type:check": "tsc --noEmit",
+    "type:watch": "bun x tsc --noEmit --watch --incremental",
     "lint": "bun x oxlint .",
     "lint:fix": "bun x oxlint . --fix",
     "fmt": "bun x oxfmt 'src/**/*.ts' && prettier --write \"src/**/*.{html,tsx,css}\"",
@@ -38,6 +39,7 @@
     "vitest": "^4.0.0"
   },
   "dependencies": {
+    "@solidjs/router": "^0.16.1",
     "@tailwindcss/vite": "^4.2.4",
     "chart.js": "^4.5.1",
     "daisyui": "^5.5.19",

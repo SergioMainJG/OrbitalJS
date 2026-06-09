@@ -1,25 +1,40 @@
 @import 'tailwindcss';
 @plugin 'daisyui';
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 html,
 body,
 #root {
-  width: 100%;
-  height: 100%;
   margin: 0;
   padding: 0;
-  overflow: hidden;
+  width: 100%;
   background: #0a0a1a;
 }
 
-@media (max-width: 1024px) {
-  html,
-  body,
-  #root {
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-    height: auto !important;
-  }
+html:has(.page-simulator) {
+  height: 100%;
+  overflow: hidden;
+}
+html:has(.page-simulator) body,
+html:has(.page-simulator) #root {
+  height: 100%;
+  overflow: hidden;
+}
+
+html:has(.page-docs) {
+  height: auto;
+  overflow-y: auto;
+}
+html:has(.page-docs) body,
+html:has(.page-docs) #root {
+  height: auto;
+  min-height: 100vh;
+  overflow-y: auto;
 }
 
 .panel-scroll::-webkit-scrollbar {

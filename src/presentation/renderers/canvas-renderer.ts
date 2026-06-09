@@ -6,6 +6,7 @@ import { DrawBodiesService } from "./draw-bodies";
 export class CanvasRenderer implements Renderer {
   private ctx: CanvasRenderingContext2D;
   private camera: Camera;
+  private starsBitmap: ImageBitmap | null = null;
   private starsCanvas: HTMLCanvasElement | null = null;
   private width: number;
   private height: number;
@@ -45,32 +46,59 @@ export class CanvasRenderer implements Renderer {
     this.camera.autoScale(val);
   }
 
+  /**
+   * Renders 400 random stars into an off-screen surface.
+   *
+   * Strategy (fastest → slowest):
+   * 1. `OffscreenCanvas` → `transferToImageBitmap()` — rendered off the main
+   *    thread, then transferred to a GPU-resident `ImageBitmap` for zero-copy
+   *    `drawImage` on every frame.
+   * 2. Fallback `HTMLCanvasElement` — same rendering, same `drawImage`, but
+   *    stays on the main thread.  Used on browsers that don't support
+   *    `OffscreenCanvas` (Safari < 16.4, older Firefox).
+   */
   private initStarsBackground(): void {
-    this.starsCanvas = document.createElement("canvas");
-    this.starsCanvas.width = this.width;
-    this.starsCanvas.height = this.height;
-    const starsCtx = this.starsCanvas.getContext("2d")!;
+    this.starsBitmap?.close();
+    this.starsBitmap = null;
+    this.starsCanvas = null;
 
-    starsCtx.fillStyle = "#0a0a2a";
-    starsCtx.fillRect(0, 0, this.width, this.height);
+    const drawStars = (ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D): void => {
+      ctx.fillStyle = "#0a0a2a";
+      ctx.fillRect(0, 0, this.width, this.height);
 
-    const starCount = 400;
-    for (let i = 0; i < starCount; i++) {
-      starsCtx.beginPath();
-      starsCtx.arc(
-        Math.random() * this.width,
-        Math.random() * this.height,
-        Math.random() * 1.2,
-        0,
-        Math.PI * 2,
-      );
-      starsCtx.fillStyle = `rgba(255, 255, 255, ${0.3 + Math.random() * 0.7})`;
-      starsCtx.fill();
+      const starCount = 400;
+      for (let i = 0; i < starCount; i++) {
+        ctx.beginPath();
+        ctx.arc(
+          Math.random() * this.width,
+          Math.random() * this.height,
+          Math.random() * 1.2,
+          0,
+          Math.PI * 2,
+        );
+        ctx.fillStyle = `rgba(255, 255, 255, ${0.3 + Math.random() * 0.7})`;
+        ctx.fill();
+      }
+    };
+
+    if (typeof OffscreenCanvas !== "undefined") {
+      const offscreen = new OffscreenCanvas(this.width, this.height);
+      const offCtx = offscreen.getContext("2d")!;
+      drawStars(offCtx);
+      this.starsBitmap = offscreen.transferToImageBitmap();
+    } else {
+      const fallback = document.createElement("canvas");
+      fallback.width = this.width;
+      fallback.height = this.height;
+      drawStars(fallback.getContext("2d")!);
+      this.starsCanvas = fallback;
     }
   }
 
   clear(): void {
-    if (this.starsCanvas) {
+    if (this.starsBitmap) {
+      this.ctx.drawImage(this.starsBitmap, 0, 0);
+    } else if (this.starsCanvas) {
       this.ctx.drawImage(this.starsCanvas, 0, 0);
     }
   }
@@ -86,6 +114,8 @@ export class CanvasRenderer implements Renderer {
   }
 
   destroy(): void {
+    this.starsBitmap?.close();
+    this.starsBitmap = null;
     this.starsCanvas = null;
     this.drawBodiesService.clearTrails();
   }

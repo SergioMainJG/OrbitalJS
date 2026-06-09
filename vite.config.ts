@@ -42,6 +42,17 @@ resolve: {
       chunkSizeWarningLimit: 500,
       minify: true,
       cssMinify: true,
+      modulePreload: {
+        polyfill: false,
+        resolveDependencies: (filename: string, deps: string[]) => {
+          if (filename.includes('index')) {
+            return deps.filter(
+              (d) => d.includes('physics-core') || d.includes('vendor-solid')
+            );
+          }
+          return [];
+        },
+      },
       rollupOptions: {
         output: {
           advancedChunks: {
@@ -53,8 +64,13 @@ resolve: {
               },
               {
                 name: 'vendor-chartjs',
-                test: /node_modules\/chart\.js/,
-                priority: 20,
+                test: /node_modules\/chart\.js|@kurkle\//,
+                priority: 25,
+              },
+              {
+                name: 'physics-core',
+                test: /src\/core\/physics|src\/core\/engines/,
+                priority: 40,
               },
               {
                 name: 'vendor',

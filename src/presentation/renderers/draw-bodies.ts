@@ -46,15 +46,19 @@ export class DrawBodiesService {
       const displayRadius = body.name === "Sun" ? radius * 0.3 : radius;
 
       if (showOrbit) {
-        for (let i = 1; i < updated.length; i++) {
-          const opacity = i / updated.length;
+        const BUCKET_SIZE = 5;
+        ctx.lineWidth = 1.5;
+        for (let i = 1; i < updated.length; i += BUCKET_SIZE) {
+          const bucketEnd = Math.min(i + BUCKET_SIZE, updated.length);
+          const opacity = (i + Math.floor(BUCKET_SIZE / 2)) / updated.length;
           ctx.beginPath();
           ctx.moveTo(updated[i - 1]!.x, updated[i - 1]!.y);
-          ctx.lineTo(updated[i]!.x, updated[i]!.y);
+          for (let j = i; j < bucketEnd; j++) {
+            ctx.lineTo(updated[j]!.x, updated[j]!.y);
+          }
           ctx.strokeStyle = `${color}${Math.floor(opacity * 255)
             .toString(16)
             .padStart(2, "0")}`;
-          ctx.lineWidth = 1.5;
           ctx.stroke();
         }
       }

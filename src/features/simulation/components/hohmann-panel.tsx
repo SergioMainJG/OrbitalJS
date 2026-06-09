@@ -31,10 +31,10 @@ export const HohmannPanel: Component = () => {
     },
     [],
     {
-      equals: (a, b) => {
-        if (a.length !== b.length) return false;
-        return a.every((body, i) => body.name === b[i]?.name);
-      },
+      equals: (a, b) =>
+        a.length === b.length &&
+        a[0]?.name === b[0]?.name &&
+        a[a.length - 1]?.name === b[a.length - 1]?.name,
     }
   );
 
@@ -197,7 +197,7 @@ export const HohmannPanel: Component = () => {
             <div class="flex flex-col gap-3">
               <div class="flex gap-2">
                 <div class="flex-1">
-                  <label class="mb-1 block text-[10px] text-slate-400 uppercase">Origen</label>
+                  <label class="mb-1 block text-[10px] text-slate-300 uppercase">Origen</label>
                   <select
                     value={hohmannParams().origin}
                     onChange={(e) => handleOriginChange(e.currentTarget.value)}
@@ -214,7 +214,7 @@ export const HohmannPanel: Component = () => {
                 </div>
 
                 <div class="flex-1">
-                  <label class="mb-1 block text-[10px] text-slate-400 uppercase">Destino</label>
+                  <label class="mb-1 block text-[10px] text-slate-300 uppercase">Destino</label>
                   <select
                     value={hohmannParams().target}
                     onChange={(e) => handleTargetChange(e.currentTarget.value)}
@@ -234,40 +234,40 @@ export const HohmannPanel: Component = () => {
               <Show
                 when={calculation()}
                 fallback={
-                  <div class="py-1 text-center text-slate-500">Selecciona planetas distintos</div>
+                  <div class="py-1 text-center text-slate-400">Selecciona planetas distintos</div>
                 }
               >
                 {(calc) => (
                   <div class="flex flex-col gap-2 rounded bg-slate-950/60 p-2">
                     <div class="flex justify-between">
-                      <span class="text-slate-500">Distancia r₁:</span>
+                      <span class="text-slate-400">Distancia r₁:</span>
                       <span class="font-mono">{calc().r1.toFixed(3)} UA</span>
                     </div>
                     <div class="flex justify-between">
-                      <span class="text-slate-500">Distancia r₂:</span>
+                      <span class="text-slate-400">Distancia r₂:</span>
                       <span class="font-mono">{calc().r2.toFixed(3)} UA</span>
                     </div>
                     <div class="my-1 border-t border-slate-800"></div>
                     <div class="flex justify-between">
-                      <span class="text-slate-500">Impulso Δv₁:</span>
+                      <span class="text-slate-400">Impulso Δv₁:</span>
                       <span class="font-mono text-green-400">
                         {(calc().dv1 * KM_S_PER_AU_DAY).toFixed(2)} km/s
                       </span>
                     </div>
                     <div class="flex justify-between">
-                      <span class="text-slate-500">Impulso Δv₂:</span>
+                      <span class="text-slate-400">Impulso Δv₂:</span>
                       <span class="font-mono text-green-400">
                         {(calc().dv2 * KM_S_PER_AU_DAY).toFixed(2)} km/s
                       </span>
                     </div>
                     <div class="flex justify-between font-bold">
-                      <span class="text-slate-400">Total ΔV:</span>
+                      <span class="text-slate-300">Total ΔV:</span>
                       <span class="font-mono text-yellow-400">
                         {(calc().totalDv * KM_S_PER_AU_DAY).toFixed(2)} km/s
                       </span>
                     </div>
                     <div class="flex justify-between">
-                      <span class="text-slate-500">Tiempo de viaje:</span>
+                      <span class="text-slate-400">Tiempo de viaje:</span>
                       <span class="font-mono text-blue-400">
                         {calc().timeOfFlightDays.toFixed(1)} días
                       </span>
