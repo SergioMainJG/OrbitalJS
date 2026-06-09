@@ -1,0 +1,314 @@
+{
+  "$schema": "./target-mapping.schema.json",
+  "_comment": "Mapping between OrbitalJS internal keys and JPL Horizons query parameters. Edit only this file to add or update bodies — do not touch fetcher or parser code.",
+  "version": "1.0.0",
+  "targets": [
+    {
+      "key": "sun",
+      "naifId": "10",
+      "displayName": "Sun",
+      "bodyType": "Star",
+      "horizons": {
+        "command": "10",
+        "center": "500@0"
+      },
+      "physics": {
+        "massKg": 1.989e30,
+        "radiusKm": 695700,
+        "gmKm3s2": 132712440018.0
+      },
+      "render": {
+        "color": "#f97316",
+        "radiusPx": 12
+      }
+    },
+    {
+      "key": "mercury",
+      "naifId": "199",
+      "displayName": "Mercury",
+      "bodyType": "Planet",
+      "horizons": {
+        "command": "199",
+        "center": "500@10"
+      },
+      "physics": {
+        "massKg": 3.301e23,
+        "radiusKm": 2439.7,
+        "gmKm3s2": 22032.09
+      },
+      "render": {
+        "color": "#b5b5b5"
+      }
+    },
+    {
+      "key": "venus",
+      "naifId": "299",
+      "displayName": "Venus",
+      "bodyType": "Planet",
+      "horizons": {
+        "command": "299",
+        "center": "500@10"
+      },
+      "physics": {
+        "massKg": 4.8673e24,
+        "radiusKm": 6051.8,
+        "gmKm3s2": 324858.592
+      },
+      "render": {
+        "color": "#e8cda0"
+      }
+    },
+    {
+      "key": "earth",
+      "naifId": "399",
+      "displayName": "Earth",
+      "bodyType": "Planet",
+      "horizons": {
+        "command": "399",
+        "center": "500@10"
+      },
+      "physics": {
+        "massKg": 5.9722e24,
+        "radiusKm": 6371.0,
+        "gmKm3s2": 398600.435
+      },
+      "render": {
+        "color": "#4fa3e0"
+      }
+    },
+    {
+      "key": "moon",
+      "naifId": "301",
+      "displayName": "Moon",
+      "bodyType": "Moon",
+      "horizons": {
+        "command": "301",
+        "center": "500@10"
+      },
+      "physics": {
+        "massKg": 7.342e22,
+        "radiusKm": 1737.4,
+        "gmKm3s2": 4902.8
+      },
+      "render": {
+        "color": "#d1d5db"
+      }
+    },
+    {
+      "key": "mars",
+      "naifId": "499",
+      "displayName": "Mars",
+      "bodyType": "Planet",
+      "horizons": {
+        "command": "499",
+        "center": "500@10"
+      },
+      "physics": {
+        "massKg": 6.4169e23,
+        "radiusKm": 3389.5,
+        "gmKm3s2": 42828.375
+      },
+      "render": {
+        "color": "#c1440e"
+      }
+    },
+    {
+      "key": "ceres",
+      "naifId": "2000001",
+      "displayName": "Ceres",
+      "bodyType": "DwarfPlanet",
+      "horizons": {
+        "command": "1;",
+        "center": "500@10"
+      },
+      "physics": {
+        "massKg": 9.393e20,
+        "radiusKm": 469.73,
+        "gmKm3s2": 62.63
+      },
+      "render": {
+        "color": "#a0a0a0"
+      }
+    },
+    {
+      "key": "jupiter",
+      "naifId": "599",
+      "displayName": "Jupiter",
+      "bodyType": "Planet",
+      "horizons": {
+        "command": "599",
+        "center": "500@10"
+      },
+      "physics": {
+        "massKg": 1.898e27,
+        "radiusKm": 71492.0,
+        "gmKm3s2": 126686511.0
+      },
+      "render": {
+        "color": "#d4a373"
+      }
+    },
+    {
+      "key": "saturn",
+      "naifId": "699",
+      "displayName": "Saturn",
+      "bodyType": "Planet",
+      "horizons": {
+        "command": "699",
+        "center": "500@10"
+      },
+      "physics": {
+        "massKg": 5.683e26,
+        "radiusKm": 60268.0,
+        "gmKm3s2": 37931187.0
+      },
+      "render": {
+        "color": "#e9c46a"
+      }
+    },
+    {
+      "key": "uranus",
+      "naifId": "799",
+      "displayName": "Uranus",
+      "bodyType": "Planet",
+      "horizons": {
+        "command": "799",
+        "center": "500@10"
+      },
+      "physics": {
+        "massKg": 8.681e25,
+        "radiusKm": 25559.0,
+        "gmKm3s2": 5793939.0
+      },
+      "render": {
+        "color": "#a8dadc"
+      }
+    },
+    {
+      "key": "neptune",
+      "naifId": "899",
+      "displayName": "Neptune",
+      "bodyType": "Planet",
+      "horizons": {
+        "command": "899",
+        "center": "500@10"
+      },
+      "physics": {
+        "massKg": 1.024e26,
+        "radiusKm": 24764.0,
+        "gmKm3s2": 6836529.0
+      },
+      "render": {
+        "color": "#457b9d"
+      }
+    },
+    {
+      "key": "pluto",
+      "naifId": "999",
+      "displayName": "Pluto",
+      "bodyType": "DwarfPlanet",
+      "horizons": {
+        "command": "999",
+        "center": "500@10"
+      },
+      "physics": {
+        "massKg": 1.303e22,
+        "radiusKm": 1188.3,
+        "gmKm3s2": 870.3
+      },
+      "render": {
+        "color": "#f4a261"
+      }
+    },
+    {
+      "key": "eris",
+      "naifId": "136199",
+      "displayName": "Eris",
+      "bodyType": "DwarfPlanet",
+      "horizons": {
+        "command": "136199;",
+        "center": "500@10"
+      },
+      "physics": {
+        "massKg": 1.66e22,
+        "radiusKm": 1163.0,
+        "gmKm3s2": 1108.0
+      },
+      "render": {
+        "color": "#e2e8f0"
+      }
+    },
+    {
+      "key": "haumea",
+      "naifId": "136108",
+      "displayName": "Haumea",
+      "bodyType": "DwarfPlanet",
+      "horizons": {
+        "command": "136108;",
+        "center": "500@10"
+      },
+      "physics": {
+        "massKg": 4.006e21,
+        "radiusKm": 780.0,
+        "gmKm3s2": 267.0
+      },
+      "render": {
+        "color": "#fef3c7"
+      }
+    },
+    {
+      "key": "makemake",
+      "naifId": "136472",
+      "displayName": "Makemake",
+      "bodyType": "DwarfPlanet",
+      "horizons": {
+        "command": "136472;",
+        "center": "500@10"
+      },
+      "physics": {
+        "massKg": 3.1e21,
+        "radiusKm": 715.0,
+        "gmKm3s2": 207.0
+      },
+      "render": {
+        "color": "#fde68a"
+      }
+    },
+    {
+      "key": "charon",
+      "naifId": "901",
+      "displayName": "Charon",
+      "bodyType": "Moon",
+      "horizons": {
+        "command": "901",
+        "center": "500@10"
+      },
+      "physics": {
+        "massKg": 1.586e21,
+        "radiusKm": 606.0,
+        "gmKm3s2": 102.3
+      },
+      "render": {
+        "color": "#cbd5e1"
+      }
+    },
+    {
+      "key": "halley",
+      "naifId": "1000036",
+      "displayName": "1P/Halley",
+      "bodyType": "Comet",
+      "horizons": {
+        "command": "90000001;",
+        "center": "500@10"
+      },
+      "physics": {
+        "massKg": 2.2e14,
+        "radiusKm": 11.0,
+        "gmKm3s2": 0.0
+      },
+      "render": {
+        "color": "#bae6fd"
+      }
+    }
+  ]
+}
