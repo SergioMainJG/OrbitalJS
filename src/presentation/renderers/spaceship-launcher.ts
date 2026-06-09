@@ -106,59 +106,67 @@ export class SpaceshipLauncher {
   }
 
   checkCollisions(bodies: BodyState[]): BodyState[] {
-    const spaceship = bodies.find((b) => b.name === SPACESHIP_NAME) as RenderBody | undefined;
-    if (!spaceship) return bodies;
+    // Filtrar todas las naves en lugar de buscar solo una
+    const spaceships = bodies.filter((b) => b.name.startsWith(SPACESHIP_NAME)) as RenderBody[];
+    if (spaceships.length === 0) return bodies;
 
-    // If spaceship has a launchedFrom property, check if it has cleared that body's collision radius
-    if (spaceship.launchedFrom) {
-      const launcherBody = bodies.find((b) => b.name === spaceship.launchedFrom);
-      if (launcherBody) {
-        const dx = spaceship.x - launcherBody.x;
-        const dy = spaceship.y - launcherBody.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        const bodyRadiusAU =
-          BODY_COLLISION_RADII_AU[launcherBody.name] ??
-          SPACESHIP_COLLISION_RADIUS_AU + launcherBody.mass * 1e-26;
+    let updatedBodies = [...bodies];
+    let impactOccurred = false;
 
-        if (dist > bodyRadiusAU * 1.1) {
-          // Spaceship has cleared the collision boundary, safe to enable collisions
-          delete spaceship.launchedFrom;
+    for (const spaceship of spaceships) {
+      if (spaceship.launchedFrom) {
+        const launcherBody = updatedBodies.find((b) => b.name === spaceship.launchedFrom);
+        if (launcherBody) {
+          const dx = spaceship.x - launcherBody.x;
+          const dy = spaceship.y - launcherBody.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          const bodyRadiusAU =
+            BODY_COLLISION_RADII_AU[launcherBody.name] ??
+            SPACESHIP_COLLISION_RADIUS_AU + launcherBody.mass * 1e-26;
+
+          if (dist > bodyRadiusAU * 1.5) {
+            delete spaceship.launchedFrom;
+          }
         }
       }
-    }
 
-    for (const body of bodies) {
-      if (body.name === SPACESHIP_NAME) continue;
+      let destroyed = false;
+      for (const body of updatedBodies) {
+        if (body.name.startsWith(SPACESHIP_NAME)) continue;
+        if (spaceship.launchedFrom === body.name) continue;
 
-      // Ignore collision if the spaceship is still within the origin body's collision radius
-      if (spaceship.launchedFrom === body.name) {
-        continue;
+        const dx = spaceship.x - body.x;
+        const dy = spaceship.y - body.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        const bodyRadiusAU =
+          BODY_COLLISION_RADII_AU[body.name] ?? SPACESHIP_COLLISION_RADIUS_AU + body.mass * 1e-26;
+
+        if (dist < bodyRadiusAU) {
+          const impactPx = {
+            px: this.cx + spaceship.x * this.scale,
+            py: this.cy - spaceship.y * this.scale,
+          };
+
+          this.impactFade = { ...impactPx, alpha: 1 };
+          this.onImpact(body.name);
+          impactOccurred = true;
+          destroyed = true;
+          break; // Romper el ciclo de cuerpos y pasar a la siguiente nave
+        }
       }
 
-      const dx = spaceship.x - body.x;
-      const dy = spaceship.y - body.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-
-      const bodyRadiusAU =
-        BODY_COLLISION_RADII_AU[body.name] ?? SPACESHIP_COLLISION_RADIUS_AU + body.mass * 1e-26;
-
-      if (dist < bodyRadiusAU) {
-        const impactPx = {
-          px: this.cx + spaceship.x * this.scale,
-          py: this.cy - spaceship.y * this.scale,
-        };
-
-        this.impactFade = { ...impactPx, alpha: 1 };
-        this.launchState = { phase: "idle", originCanvas: null, currentCanvas: null };
-        clearSpaceshipTrail();
-
-        this.onImpact(body.name);
-
-        return bodies.filter((b) => b.name !== SPACESHIP_NAME);
+      if (destroyed) {
+        // Extraemos solo la nave destruida del array universal
+        updatedBodies = updatedBodies.filter((b) => b.name !== spaceship.name);
       }
     }
 
-    return bodies;
+    if (impactOccurred) {
+      this.launchState = { phase: "idle", originCanvas: null, currentCanvas: null };
+    }
+
+    return updatedBodies;
   }
 
   cancel(): void {

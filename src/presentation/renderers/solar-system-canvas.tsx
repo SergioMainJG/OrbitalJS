@@ -46,7 +46,7 @@ const { MAX_DT_EULER, MAX_DT_RK4 } = UNIVERSAL_CONSTS;
 
 function buildScene(allBodies: RenderBody[], timeStep: number, elapsed: number): Scene {
   return {
-    bodies: allBodies.filter((b) => b.name !== SPACESHIP_NAME),
+    bodies: allBodies.filter((b) => !b.name.startsWith(SPACESHIP_NAME)),
     overlays: [],
     annotations: [],
     metadata: { name: 'solar-system', timeStep, elapsed },
@@ -157,7 +157,7 @@ function SolarSystemCanvas() {
         const prevBody = prev[i]!;
         const nextBody = { ...prevBody, ...b } as RenderBody;
 
-        if (nextBody.name === SPACESHIP_NAME && nextBody.hohmannDv2Applied === false) {
+        if (nextBody.name.startsWith(SPACESHIP_NAME) && nextBody.hohmannDv2Applied === false) {
           const r = Math.sqrt(nextBody.x * nextBody.x + nextBody.y * nextBody.y);
           const direction = nextBody.hohmannDirection as 'out' | 'in';
 
@@ -217,12 +217,11 @@ function SolarSystemCanvas() {
     const camera = renderer.getCamera();
     let scale = camera.scale;
 
-    const ship = bodies().find((b) => b.name === SPACESHIP_NAME);
+    const ships = bodies().filter((b) => b.name.startsWith(SPACESHIP_NAME));
 
-    // Dynamic Camera Follow mode for the spaceship with lerp and adaptive zoom
-    if (followSpaceship() && ship) {
+    if (followSpaceship() && ships.length > 0) {
+      const ship = ships[ships.length - 1] as RenderBody; // La cámara seguirá a la nave más reciente
       const speed = Math.sqrt(ship.vx * ship.vx + ship.vy * ship.vy);
-      // Adaptive zoom: slower speed -> zoom in (larger scale), higher speed -> zoom out (smaller scale)
       const targetScale = Math.max(35, Math.min(300, 1.8 / (speed + 0.005)));
       camera.scale += (targetScale - camera.scale) * 0.05;
       scale = camera.scale;
@@ -348,7 +347,7 @@ function SolarSystemCanvas() {
     ctx.fillText('INICIO', initialPx - 18, initialPy - 8);
     ctx.restore();
 
-    if (ship) {
+    for (const ship of ships) {
       drawSpaceship(ctx, ship, scale, cx, cy, showTrajectory());
     }
 
@@ -476,36 +475,61 @@ function SolarSystemCanvas() {
     launcher = new SpaceshipLauncher(canvasRef, context, camera.scale, cx, cy, {
       onLaunch: (spaceship) => {
         let launchedFrom: string | undefined;
+        let addedVx = 0;
+        let addedVy = 0;
+        let launchX = spaceship.x;
+        let launchY = spaceship.y;
+
         const currentBodies = bodies();
+
+        // 1. Evitar singularidad y heredar inercia orbital
         for (const body of currentBodies) {
           const dx = spaceship.x - body.x;
           const dy = spaceship.y - body.y;
           const dist = Math.sqrt(dx * dx + dy * dy);
           const bodyRadiusAU =
             BODY_COLLISION_RADII_AU[body.name] ?? SPACESHIP_COLLISION_RADIUS_AU + body.mass * 1e-26;
-          if (dist < bodyRadiusAU * 1.5) {
+
+          // Ampliamos el radio de detección a * 2 para atrapar clicks cercanos al planeta
+          if (dist < bodyRadiusAU * 2) {
             launchedFrom = body.name;
+            addedVx = body.vx; // Sumar inercia
+            addedVy = body.vy; // Sumar inercia
+
+            // Empujar la nave a una distancia segura
+            const safeDistance = bodyRadiusAU * 2.5;
+            const vMag = Math.sqrt(spaceship.vx * spaceship.vx + spaceship.vy * spaceship.vy);
+            if (vMag > 0) {
+              launchX = body.x + (spaceship.vx / vMag) * safeDistance;
+              launchY = body.y + (spaceship.vy / vMag) * safeDistance;
+            }
             break;
           }
         }
 
+        // 2. Nombre único para que React/Solid no las confunda
+        const uniqueName = `${SPACESHIP_NAME}-${Date.now()}`;
+
         const spaceshipRender: RenderBody = {
           ...spaceship,
+          name: uniqueName,
+          x: launchX,
+          y: launchY,
+          vx: spaceship.vx + addedVx,
+          vy: spaceship.vy + addedVy,
           mass: 1e-25,
           radius: 4,
           color: '#00ffff',
           launchedFrom,
         };
+
         setBodies([...bodies(), spaceshipRender]);
-        addLogMessage(
-          `[INFO] Nave lanzada: pos = (${spaceship.x.toFixed(3)}, ${spaceship.y.toFixed(3)}) UA, vel = (${spaceship.vx.toFixed(4)}, ${spaceship.vy.toFixed(4)}) UA/día.`
-        );
       },
       onCancel: () => {
-        setBodies(bodies().filter((b) => b.name !== SPACESHIP_NAME));
+        // Dejar vacío. Si el usuario cancela el drag (con Click derecho o ESC),
+        // solo queremos cancelar la UI de apuntado, no borrar las naves existentes.
       },
       onImpact: (bodyName) => {
-        console.info(`[SpaceshipLauncher] Impacto con ${bodyName}`);
         addLogMessage(`[CRITICAL] Nave espacial destruida por colisión con ${bodyName}.`);
       },
     });
