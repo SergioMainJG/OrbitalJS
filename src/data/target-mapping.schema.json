@@ -1,0 +1,106 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "target-mapping.schema.json",
+  "title": "OrbitalJS Target Mapping",
+  "description": "Schema for target-mapping.json. Defines all bodies known to OrbitalJS, their NAIF IDs, and the exact Horizons API parameters needed to fetch their ephemerides.",
+  "type": "object",
+  "required": ["version", "targets"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "_comment": { "type": "string" },
+    "version": {
+      "type": "string",
+      "description": "Semantic version of this mapping file.",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "targets": {
+      "type": "array",
+      "description": "Ordered list of all fetchable bodies.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["key", "naifId", "displayName", "bodyType", "horizons", "physics", "render"],
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "Internal stable identifier used as map key in the fetcher and as the lookup key in planets.json. Must be lowercase ASCII, no spaces.",
+            "pattern": "^[a-z0-9_]+$"
+          },
+          "naifId": {
+            "type": "string",
+            "description": "Official SPICE/NAIF numeric ID. Used by your app as the canonical source-of-truth identifier. Not necessarily equal to the Horizons command string.",
+            "pattern": "^[0-9]+$"
+          },
+          "displayName": {
+            "type": "string",
+            "description": "Human-readable name shown in the UI and used as the body.name in BodyState / RenderBody."
+          },
+          "bodyType": {
+            "type": "string",
+            "description": "Physical classification aligned with the BodyType enum in celestial-body.ts.",
+            "enum": ["Star", "Planet", "DwarfPlanet", "Moon", "Asteroid", "Comet", "Custom"]
+          },
+          "horizons": {
+            "type": "object",
+            "description": "Horizons API query parameters. Kept separate from naifId because small-body identifiers follow different conventions than major-body NAIF IDs.",
+            "required": ["command", "center"],
+            "additionalProperties": false,
+            "properties": {
+              "command": {
+                "type": "string",
+                "description": "Value passed verbatim to the Horizons COMMAND parameter. Major bodies: numeric NAIF ID (e.g. '399'). Small bodies / asteroids: 'DES=<number>;' prefix. Comets: 'DES=<designation>;' (e.g. 'DES=1P;')."
+              },
+              "center": {
+                "type": "string",
+                "description": "Horizons CENTER parameter. '500@10' = Sun body-center (heliocentric). '500@399' = Earth body-center (geocentric).",
+                "examples": ["500@10", "500@0", "500@399"]
+              }
+            }
+          },
+          "physics": {
+            "type": "object",
+            "description": "Physical constants sourced from IAU / NASA Planetary Fact Sheet. Stored in SI/conventional units here; the fetcher converts to AU-day² for the RK4 engine.",
+            "required": ["massKg", "radiusKm", "gmKm3s2"],
+            "additionalProperties": false,
+            "properties": {
+              "massKg": {
+                "type": "number",
+                "description": "Body mass in kilograms.",
+                "exclusiveMinimum": 0
+              },
+              "radiusKm": {
+                "type": "number",
+                "description": "Mean equatorial radius in kilometers.",
+                "exclusiveMinimum": 0
+              },
+              "gmKm3s2": {
+                "type": "number",
+                "description": "Standard gravitational parameter GM in km³/s². The fetcher uses this to derive GM in AU³/day² for the integrators. Set to 0 for negligible-mass bodies (comets).",
+                "minimum": 0
+              }
+            }
+          },
+          "render": {
+            "type": "object",
+            "description": "Visual properties used by the Canvas renderer.",
+            "required": ["color"],
+            "additionalProperties": false,
+            "properties": {
+              "color": {
+                "type": "string",
+                "description": "CSS hex color string used to draw this body and its orbital trail.",
+                "pattern": "^#[0-9a-fA-F]{6}$"
+              },
+              "radiusPx": {
+                "type": "number",
+                "description": "Optional fixed display radius in pixels. When omitted, the renderer computes the radius from body mass using getBodyRadius().",
+                "exclusiveMinimum": 0
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
