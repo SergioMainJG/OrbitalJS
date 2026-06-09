@@ -5,7 +5,7 @@
 - [Sabrina Ojeda](https://github.com/sabrinaAojeda)
 - [Katherine Lopez](https://github.com/KathLoppz)
 - [Luis Diaz](https://github.com/KathLoppz)
-- [Joel Freire](#)
+- [Joel Freire](https://github.com/JoelFreire-dev)
 - [Sergio Arce](https://github.com/SergioMainJG)
 
 ## Descripción
