@@ -5,6 +5,17 @@ import type { BodyState, ComparisonState, TrailPoint } from "@/shared/types";
 
 const { EULER_TRAIL_LENGTH, RK4_TRAIL_LENGTH } = UNIVERSAL_CONSTS;
 
+/**
+ * Advances both the Euler and RK4 shadow simulations by one step,
+ * appending the new positions to their respective trail buffers.
+ *
+ * The comparison engine runs in parallel to the main RK4 simulation so that
+ * the integrator divergence is visible in real time on the canvas.
+ *
+ * @param state - Current comparison state (both body arrays and trail buffers).
+ * @param dt    - Time step in days (defaults to `1`).
+ * @returns A new `ComparisonState` with updated bodies, trails, and incremented step counter.
+ */
 export function tickComparison(state: ComparisonState, dt = 1): ComparisonState {
   const nextEuler = eulerStep(state.eulerBodies, dt);
   const nextRk4 = rk4Step(state.rk4Bodies, dt);
@@ -36,6 +47,13 @@ export function tickComparison(state: ComparisonState, dt = 1): ComparisonState 
   };
 }
 
+/**
+ * Creates an initial `ComparisonState` by deep-cloning the current body array
+ * for both integrators and initializing empty trail arrays.
+ *
+ * @param bodies - The canonical body states from the main simulation store.
+ * @returns A fresh `ComparisonState` ready to be fed to `tickComparison`.
+ */
 export function makeEmptyComparisonState(bodies: BodyState[]): ComparisonState {
   return {
     eulerBodies: structuredClone(bodies),

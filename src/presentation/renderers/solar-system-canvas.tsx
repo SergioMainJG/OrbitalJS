@@ -216,7 +216,7 @@ function SolarSystemCanvas() {
     const ships = bodies().filter((b) => b.name.startsWith(SPACESHIP_NAME));
 
     if (followSpaceship() && ships.length > 0) {
-      const ship = ships[ships.length - 1] as RenderBody; // La cámara seguirá a la nave más reciente
+      const ship = ships[ships.length - 1] as RenderBody;
       const speed = Math.sqrt(ship.vx * ship.vx + ship.vy * ship.vy);
       const targetScale = Math.max(35, Math.min(300, 1.8 / (speed + 0.005)));
       camera.scale += (targetScale - camera.scale) * 0.05;
@@ -231,14 +231,12 @@ function SolarSystemCanvas() {
     const { cx, cy } = camera.getCenter();
     launcher?.updateTransform(scale, cx, cy);
 
-    // Render bodies with showOrbit toggle
     renderer.render(buildScene(bodies(), dt(), currentDay()), showOrbit());
 
     if (isComparing()) {
       drawComparisonTrails(ctx, scale, cx, cy);
     }
 
-    // Draw Lagrange Points (L1 - L5) if enabled
     if (showLagrange()) {
       const sun = bodies().find((b) => b.name === 'Sun');
       const earth = bodies().find((b) => b.name === 'Earth');
@@ -295,7 +293,6 @@ function SolarSystemCanvas() {
       }
     }
 
-    // Draw Hohmann Transfer Ellipse if enabled
     if (showHohmann()) {
       const params = hohmannParams();
       const originBody = bodies().find((b) => b.name === params.origin);
@@ -483,7 +480,6 @@ function SolarSystemCanvas() {
           const dy = spaceship.y - body.y;
           const dist = Math.sqrt(dx * dx + dy * dy);
 
-          // Usamos la escala directa de la cámara
           const baseRadius = body.radius ?? 5;
           const bodyRadiusAU = baseRadius / camera.scale;
 
@@ -492,7 +488,6 @@ function SolarSystemCanvas() {
             addedVx = body.vx;
             addedVy = body.vy;
 
-            // Distancia de despliegue pegada a la superficie visible para no romper la gravedad
             const safeDistance = bodyRadiusAU * 1.5;
             const vMag = Math.sqrt(spaceship.vx * spaceship.vx + spaceship.vy * spaceship.vy);
             if (vMag > 0) {
@@ -505,7 +500,6 @@ function SolarSystemCanvas() {
 
         const uniqueName = `${SPACESHIP_NAME}-${Date.now()}`;
 
-        // Aumentamos ligeramente la sensibilidad del drag para facilitar el escape orbital
         const dragMultiplier = 2.5;
 
         const spaceshipRender: RenderBody = {
@@ -516,22 +510,18 @@ function SolarSystemCanvas() {
           vx: spaceship.vx * dragMultiplier + addedVx,
           vy: spaceship.vy * dragMultiplier + addedVy,
           mass: 1e-25,
-          radius: 4, // Un poco más visible
+          radius: 4,
           color: '#00ffff',
           launchedFrom,
         };
 
         setBodies([...bodies(), spaceshipRender]);
 
-        // RECUPERADO: El log vuelve a funcionar
         addLogMessage(
           `[INFO] Nave lanzada: pos = (${spaceshipRender.x.toFixed(3)}, ${spaceshipRender.y.toFixed(3)}) UA, vel drag = ${(spaceship.vx * dragMultiplier).toFixed(4)} UA/día.`
         );
       },
-      onCancel: () => {
-        // Dejar vacío. Si el usuario cancela el drag (con Click derecho o ESC),
-        // solo queremos cancelar la UI de apuntado, no borrar las naves existentes.
-      },
+      onCancel: () => {},
       onImpact: (bodyName) => {
         addLogMessage(`[CRITICAL] Nave espacial destruida por colisión con ${bodyName}.`);
       },

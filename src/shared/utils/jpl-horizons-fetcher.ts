@@ -21,17 +21,30 @@ const HORIZONS_BASE_URL = "https://ssd.jpl.nasa.gov/api/horizons.api";
  * El sufijo "99" denota el centroide del cuerpo (no el baricentro del sistema).
  * Centro: 10 = Sol (centroide)
  */
+/**
+ * NAIF IDs de los cuerpos del sistema solar.
+ * El sufijo "99" denota el centroide del cuerpo.
+ */
 export const PLANET_NAIF_IDS = {
+  // Planetas interiores
   mercury: "199",
   venus: "299",
   earth: "399",
   mars: "499",
-  ceres: "1",
+
+  // Planetas gigantes
   jupiter: "599",
   saturn: "699",
   uranus: "799",
   neptune: "899",
+
+  // Planetas enanos y otros cuerpos relevantes
+  ceres: "2000001",
   pluto: "999",
+  charon: "999011", // Caronte (satélite de Plutón)
+  haumea: "2001361",
+  makemake: "2001364",
+  eris: "200136199",
 } as const;
 
 export type PlanetKey = keyof typeof PLANET_NAIF_IDS;

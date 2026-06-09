@@ -1,6 +1,22 @@
 import type { BodyState } from "@/shared/types";
 import { getBodyRadius } from "./body-renderer";
 
+/**
+ * Returns the body under the mouse cursor, or `null` if none is hit.
+ *
+ * Uses the same display radius as the renderer so the hit region exactly
+ * matches what is drawn on screen. An optional `hitMargin` extends the
+ * clickable area beyond the visual boundary to ease interaction on small bodies.
+ *
+ * @param mouseX    - Mouse X position in canvas pixels.
+ * @param mouseY    - Mouse Y position in canvas pixels.
+ * @param bodies    - All bodies currently in the simulation.
+ * @param scale     - Current camera scale in px/AU.
+ * @param centerX   - Canvas origin X (center + pan offset) in pixels.
+ * @param centerY   - Canvas origin Y (center + pan offset) in pixels.
+ * @param hitMargin - Extra radius in pixels added to each body's hit zone (default `5`).
+ * @returns The first `BodyState` hit by the cursor, or `null` if none.
+ */
 export function getHoveredBody(
   mouseX: number,
   mouseY: number,

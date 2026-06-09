@@ -1,8 +1,17 @@
 import { UNIVERSAL_CONSTS } from "@/shared/constants";
 import type { BodyState, Derivative } from "@/shared/types";
 
+/** G in AU³ / (M☉ · day²). */
 const { G } = UNIVERSAL_CONSTS;
 
+/**
+ * Evaluates gravitational acceleration derivatives for every body in the system.
+ * Applies Newton's law of universal gravitation between all pairs:
+ * `a_i = Σ_{j≠i} G·mⱼ·(rⱼ − rᵢ) / |rⱼ − rᵢ|³`
+ *
+ * @param state - Current positions and velocities of all bodies.
+ * @returns Array of `Derivative` objects (dx/dt, dy/dt, dvx/dt, dvy/dt) per body.
+ */
 const evalDerivatives = (state: BodyState[]): Derivative[] => {
   return state.map((body, i) => {
     let ax = 0;
@@ -26,6 +35,15 @@ const evalDerivatives = (state: BodyState[]): Derivative[] => {
   });
 };
 
+/**
+ * Applies a set of derivatives to a state with a scalar multiplier.
+ * Used internally to build intermediate RK4 stages (k1–k4).
+ *
+ * @param state  - Current body states.
+ * @param derivs - Derivatives evaluated at the current state.
+ * @param scale  - Time-step multiplier (e.g. `dt/2` or `dt`).
+ * @returns New state with positions and velocities advanced by `derivs * scale`.
+ */
 const advance = (state: BodyState[], derivs: Derivative[], scale: number): BodyState[] =>
   state.map((body, i) => ({
     ...body,
@@ -35,6 +53,19 @@ const advance = (state: BodyState[], derivs: Derivative[], scale: number): BodyS
     vy: body.vy + derivs[i]!.dvy * scale,
   }));
 
+/**
+ * Advances the N-body system by one time step using the classical 4th-order Runge-Kutta method.
+ *
+ * RK4 combines four derivative evaluations (k1–k4) with Simpson-rule weights:
+ * `y(t+dt) = y(t) + (k1 + 2k2 + 2k3 + k4) * dt / 6`
+ *
+ * Errors scale as O(dt⁵) per step, O(dt⁴) globally — far more accurate than Euler
+ * for the same time step, at the cost of 4× derivative evaluations.
+ *
+ * @param state - Array of body states at time `t`.
+ * @param dt    - Time step in days.
+ * @returns Updated body states at time `t + dt`.
+ */
 export const rk4Step = (state: BodyState[], dt: number): BodyState[] => {
   const k1 = evalDerivatives(state);
 

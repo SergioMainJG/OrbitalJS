@@ -23,9 +23,8 @@ export const HohmannPanel: Component = () => {
       return bodies().filter((b) => {
         if (b.name === 'Sun' || b.name.startsWith(SPACESHIP_NAME)) return false;
 
-        // Descartar el cuerpo central del mapa (su radio orbital es casi 0)
         const r = Math.sqrt(b.x * b.x + b.y * b.y);
-        if (r < 0.0001) return false;
+        if (r < 1e-5) return false;
 
         return true;
       });
@@ -39,7 +38,6 @@ export const HohmannPanel: Component = () => {
     }
   );
 
-  // Automatically validate and sync hohmannParams when available planets change
   createEffect(() => {
     const list = availablePlanets();
     if (list.length < 2) return;
@@ -52,7 +50,6 @@ export const HohmannPanel: Component = () => {
     const hasTarget = list.some((p) => p.name === newTarget);
 
     if (!hasOrigin || !hasTarget || newOrigin === newTarget) {
-      // Find Earth and Mars if they exist, otherwise the first two planets
       const earthExists = list.some((p) => p.name === 'Earth');
       const marsExists = list.some((p) => p.name === 'Mars');
 
@@ -67,7 +64,6 @@ export const HohmannPanel: Component = () => {
     }
   });
 
-  // Avoid origin and target being the same planet by automatically switching the other planet
   const handleOriginChange = (name: string) => {
     setHohmannParams((p) => {
       if (p.target === name) {
@@ -99,24 +95,20 @@ export const HohmannPanel: Component = () => {
       return null;
     }
 
-    // Distance to Sun (assuming Sun is near 0,0)
     const r1 = Math.sqrt(originBody.x * originBody.x + originBody.y * originBody.y);
     const r2 = Math.sqrt(targetBody.x * targetBody.x + targetBody.y * targetBody.y);
 
     if (r1 === 0 || r2 === 0) return null;
 
-    // Speeds of planets
     const v1 = Math.sqrt(G / r1);
     const v2 = Math.sqrt(G / r2);
 
     const a = (r1 + r2) / 2;
 
-    // Delta-v burns
     const dv1 = v1 * (Math.sqrt((2 * r2) / (r1 + r2)) - 1);
     const dv2 = v2 * (1 - Math.sqrt((2 * r1) / (r1 + r2)));
     const totalDv = Math.abs(dv1) + Math.abs(dv2);
 
-    // Time of flight in days
     const timeOfFlightDays = Math.PI * Math.sqrt((a * a * a) / G);
 
     return {
@@ -137,23 +129,17 @@ export const HohmannPanel: Component = () => {
     const origin = calc.originBody;
     const dv1 = calc.dv1;
 
-    // Magnitud de la velocidad del planeta
     const v = Math.sqrt(origin.vx * origin.vx + origin.vy * origin.vy);
     if (v === 0) return;
 
-    // Vector unitario tangencial (en la dirección de la velocidad)
     const tx = origin.vx / v;
     const ty = origin.vy / v;
 
-    // Velocidad de la nave: velocidad del planeta + impulso de Hohmann
     const vxShip = origin.vx + dv1 * tx;
     const vyShip = origin.vy + dv1 * ty;
 
-    // --- CORRECCIÓN DE SINGULARIDAD GRAVITACIONAL ---
-    // Usamos estrictamente un 0.5% de la distancia orbital para asegurar la salida atmosférica
-    const offsetDistance = calc.r1 * 0.005;
+    const offsetDistance = Math.max(calc.r1 * 0.02, 0.005);
 
-    // Si aceleramos (dv1 > 0), nos ponemos por delante. Si frenamos (dv1 < 0), nos ponemos por detrás.
     const sign = dv1 >= 0 ? 1 : -1;
     const offsetX = tx * offsetDistance * sign;
     const offsetY = ty * offsetDistance * sign;
@@ -168,14 +154,12 @@ export const HohmannPanel: Component = () => {
       radius: 4,
       color: '#00ffff',
       launchedFrom: origin.name,
-      // Propiedades de Hohmann para aplicar el segundo impulso en el loop de física
       hohmannDv2Applied: false,
       hohmannTargetR: calc.r2,
       hohmannDv2Val: calc.dv2,
       hohmannDirection: calc.r2 > calc.r1 ? 'out' : 'in',
     };
 
-    // Reemplazar nave existente si la hay
     clearSpaceshipTrail();
     setBodies([...bodies().filter((b) => !b.name.startsWith(SPACESHIP_NAME)), spaceship]);
   };

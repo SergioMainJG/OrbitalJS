@@ -1,9 +1,30 @@
 import type { BodyState, TrailPoint } from "@/shared/types";
 import { getBodyColor, getBodyRadius, addTrailPoint } from "./body-renderer";
 
+/**
+ * Stateful service that draws all celestial bodies on a Canvas 2D context.
+ *
+ * Maintains a per-body trail map so that each body's orbital path can be
+ * rendered as a fading polyline on every frame.
+ */
 export class DrawBodiesService {
   private readonly trails = new Map<string, TrailPoint[]>();
 
+  /**
+   * Renders all bodies and their orbital trails to the given context.
+   *
+   * Each body is drawn in three passes:
+   * 1. Orbital trail (fading polyline, skipped when `showOrbit` is `false`).
+   * 2. Optional solar glow halo (Sun only).
+   * 3. Filled circle + name label.
+   *
+   * @param ctx       - Canvas 2D rendering context.
+   * @param bodies    - Array of all bodies to draw.
+   * @param scale     - Current camera scale in px/AU.
+   * @param cx        - Canvas origin X in pixels (center + pan offset).
+   * @param cy        - Canvas origin Y in pixels (center + pan offset).
+   * @param showOrbit - When `false`, orbital trails are skipped (default `true`).
+   */
   draw(
     ctx: CanvasRenderingContext2D,
     bodies: BodyState[],
@@ -65,6 +86,7 @@ export class DrawBodiesService {
     }
   }
 
+  /** Clears all stored trail points, e.g. when loading a new scenario. */
   clearTrails(): void {
     this.trails.clear();
   }

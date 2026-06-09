@@ -18,6 +18,17 @@ interface ImpactFade {
   alpha: number;
 }
 
+/**
+ * Handles mouse-driven spaceship launch gestures on the simulation canvas.
+ *
+ * Manages three lifecycle phases:
+ * - `idle`    — waiting for the user to begin a drag.
+ * - `aiming`  — user is dragging; a velocity arrow is drawn as visual feedback.
+ * - `launched`— the ship has been handed off to the physics engine.
+ *
+ * Also runs per-frame collision detection for all active spacecraft,
+ * triggering a visual impact animation and removing destroyed bodies.
+ */
 export class SpaceshipLauncher {
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
@@ -43,6 +54,14 @@ export class SpaceshipLauncher {
   private readonly handleKeyDown: (e: KeyboardEvent) => void;
   private readonly handleContextMenu: (e: MouseEvent) => void;
 
+  /**
+   * @param canvas    - The HTMLCanvasElement receiving mouse events.
+   * @param ctx       - Its 2D rendering context (used for overlay drawing).
+   * @param scale     - Initial camera scale in px/AU.
+   * @param cx        - Initial canvas origin X in pixels.
+   * @param cy        - Initial canvas origin Y in pixels.
+   * @param callbacks - Object with `onLaunch`, `onCancel`, and `onImpact` callbacks.
+   */
   constructor(
     canvas: HTMLCanvasElement,
     ctx: CanvasRenderingContext2D,
@@ -74,12 +93,28 @@ export class SpaceshipLauncher {
     this.setCursor("crosshair");
   }
 
+  /**
+   * Syncs the camera transform so that the aiming arrow and collision test
+   * remain accurate after a zoom or pan event.
+   *
+   * @param scale - New camera scale in px/AU.
+   * @param cx    - New canvas origin X in pixels.
+   * @param cy    - New canvas origin Y in pixels.
+   */
   updateTransform(scale: number, cx: number, cy: number): void {
     this.scale = scale;
     this.cx = cx;
     this.cy = cy;
   }
 
+  /**
+   * Draws any active overlay on top of the scene.
+   * Called once per animation frame after the scene has been rendered.
+   *
+   * Renders:
+   * - The velocity aiming arrow while the user is dragging.
+   * - The fading impact message after a collision.
+   */
   drawOverlay(): void {
     if (
       this.launchState.phase === "aiming" &&
@@ -103,8 +138,18 @@ export class SpaceshipLauncher {
     }
   }
 
+  /**
+   * Tests every active spacecraft against every non-spacecraft body for collision.
+   *
+   * A spacecraft is considered destroyed when its distance to a body is less than
+   * `body.radius / camera.scale` (its visual radius in AU). Bodies listed in
+   * `spaceship.launchedFrom` are temporarily exempted until the ship has cleared
+   * their gravitational influence.
+   *
+   * @param bodies - Full body array from the simulation store.
+   * @returns A new body array with destroyed spacecraft removed.
+   */
   checkCollisions(bodies: BodyState[]): BodyState[] {
-    // Filtrar todas las naves en lugar de buscar solo una
     const spaceships = bodies.filter((b) => b.name.startsWith(SPACESHIP_NAME)) as RenderBody[];
     if (spaceships.length === 0) return bodies;
 
@@ -149,12 +194,11 @@ export class SpaceshipLauncher {
           this.onImpact(body.name);
           impactOccurred = true;
           destroyed = true;
-          break; // Romper el ciclo de cuerpos y pasar a la siguiente nave
+          break;
         }
       }
 
       if (destroyed) {
-        // Extraemos solo la nave destruida del array universal
         updatedBodies = updatedBodies.filter((b) => b.name !== spaceship.name);
         clearSpaceshipTrail(spaceship.name);
       }
@@ -167,6 +211,10 @@ export class SpaceshipLauncher {
     return updatedBodies;
   }
 
+  /**
+   * Cancels the current launch gesture and invokes the `onCancel` callback.
+   * Clears all spacecraft trails.
+   */
   cancel(): void {
     this.launchState = { phase: "idle", originCanvas: null, currentCanvas: null };
     clearSpaceshipTrail();

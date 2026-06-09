@@ -4,6 +4,12 @@ import { SPACESHIP_NAME, SPACESHIP_TRAIL_LENGTH } from "@/shared/types/spaceship
 
 const spaceshipTrails = new Map<string, TrailPoint[]>();
 
+/**
+ * Clears the trail history for one specific spacecraft, or for all spacecraft.
+ *
+ * @param spaceshipName - Name of the spacecraft whose trail should be deleted.
+ *                        When omitted, all trails are cleared (e.g. on scenario reset).
+ */
 export function clearSpaceshipTrail(spaceshipName?: string): void {
   if (spaceshipName) {
     spaceshipTrails.delete(spaceshipName);
@@ -64,6 +70,18 @@ export function drawSpaceship(
   drawShapeTriangle(ctx, px, py, angle, "#00ffff");
 }
 
+/**
+ * Renders the velocity aiming arrow during a drag-to-launch gesture.
+ *
+ * Draws a dashed cyan line from the drag origin to the current mouse position,
+ * an arrowhead at the tip, and a speed readout in AU/day.
+ *
+ * @param ctx     - Canvas 2D rendering context.
+ * @param origin  - Canvas pixel position where the drag began.
+ * @param current - Current canvas pixel position of the mouse.
+ * @param scale   - Current camera scale in px/AU (used to convert the drag
+ *                  length into a readable speed).
+ */
 export function drawVelocityArrow(
   ctx: CanvasRenderingContext2D,
   origin: { x: number; y: number },
@@ -143,6 +161,16 @@ export function drawImpactMessage(
   ctx.restore();
 }
 
+/**
+ * Draws a filled arrowhead triangle rotated to face `angle`.
+ * Used both for the aiming arrow and for the spacecraft icon itself.
+ *
+ * @param ctx   - Canvas 2D rendering context.
+ * @param px    - Canvas X position of the triangle center in pixels.
+ * @param py    - Canvas Y position of the triangle center in pixels.
+ * @param angle - Rotation angle in radians (0 = pointing right).
+ * @param color - CSS color string for fill and glow.
+ */
 function drawShapeTriangle(
   ctx: CanvasRenderingContext2D,
   px: number,
