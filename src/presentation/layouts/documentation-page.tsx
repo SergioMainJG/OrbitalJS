@@ -1,5 +1,6 @@
 import { For, Show } from 'solid-js';
 import type { Component } from 'solid-js';
+import html2pdf from 'html2pdf.js';
 
 import Section from './documentation/section';
 import InfoCard from './documentation/info-card';
@@ -263,6 +264,29 @@ const references: ReferenceItem[] = [
 ];
 
 const DocumentationPage: Component = () => {
+  const handleExportPDF = async () => {
+    const element = document.getElementById('documento-exportable');
+    if (!element) return;
+
+    element.classList.add('apa-pdf-mode');
+
+    const opt = {
+      margin: 1,
+      filename: 'documentacion-orbitaljs.pdf',
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 3, useCORS: true },
+      jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
+    };
+
+    try {
+      await html2pdf().set(opt).from(element).save();
+    } catch (error) {
+      console.error('Error al exportar PDF:', error);
+    } finally {
+      element.classList.remove('apa-pdf-mode');
+    }
+  };
+
   return (
     <main class="bg-base-200 text-base-content min-h-screen print:bg-white">
       <style>
@@ -294,10 +318,38 @@ const DocumentationPage: Component = () => {
               page-break-before: always;
             }
           }
+
+          .apa-pdf-mode {
+            font-family: Arial, sans-serif !important;
+            font-size: 11pt !important;
+            line-height: 2 !important;
+            text-align: left !important;
+            background: #ffffff !important;
+            color: #000000 !important;
+            box-shadow: none !important;
+            max-width: none !important;
+            width: 100% !important;
+            padding: 0 !important;
+          }
+          .apa-pdf-mode p {
+            text-indent: 0.5in !important;
+          }
+          .apa-pdf-mode nav,
+          .apa-pdf-mode button,
+          .apa-pdf-mode .btn {
+            display: none !important;
+          }
+          .apa-pdf-mode figure,
+          .apa-pdf-mode table {
+            page-break-inside: avoid !important;
+          }
         `}
       </style>
 
-      <article class="doc-page bg-base-100 mx-auto max-w-6xl px-5 py-8 shadow-xl md:px-10 lg:px-16 print:shadow-none">
+      <article
+        id="documento-exportable"
+        class="doc-page bg-base-100 mx-auto max-w-6xl px-5 py-8 shadow-xl md:px-10 lg:px-16 print:shadow-none"
+      >
         <header class="bg-neutral text-neutral-content relative overflow-hidden rounded-[2rem] p-8 md:p-12 print:rounded-none print:bg-white print:p-0 print:text-black">
           <div class="relative z-10 max-w-4xl">
             <p class="text-primary-content/80 mb-4 text-sm font-semibold tracking-[0.28em] uppercase print:text-black">
@@ -323,7 +375,7 @@ const DocumentationPage: Component = () => {
         </header>
 
         <nav class="border-base-300 bg-base-100/95 sticky top-0 z-20 my-8 rounded-2xl border p-4 shadow-sm backdrop-blur print:hidden">
-          <div class="flex flex-wrap gap-2 text-sm">
+          <div class="flex w-full flex-wrap items-center gap-2 text-sm">
             <a class="btn btn-ghost btn-sm" href="#resumen">
               Resumen
             </a>
@@ -348,6 +400,9 @@ const DocumentationPage: Component = () => {
             <a class="btn btn-ghost btn-sm" href="#conclusiones">
               Conclusiones
             </a>
+            <button class="btn btn-primary btn-sm ml-auto cursor-pointer" onClick={handleExportPDF}>
+              Exportar PDF (APA 7)
+            </button>
           </div>
         </nav>
 

@@ -21,10 +21,16 @@ const DashboardLayout: Component = () => {
         <ComparisonOverlay />
       </div>
 
-      <div class="flex h-auto w-full flex-col gap-2 overflow-visible lg:col-start-3 lg:row-start-1 lg:row-end-3 lg:h-full lg:overflow-hidden">
-        <ValidationPanel />
-        <ChartsPanel />
-        <LegendPanel />
+      <div class="flex h-auto w-full flex-col gap-2 overflow-visible lg:col-start-3 lg:row-start-1 lg:row-end-3 lg:h-full lg:overflow-y-auto">
+        <div class="shrink-0">
+          <ValidationPanel />
+        </div>
+        <div class="shrink-0">
+          <ChartsPanel />
+        </div>
+        <div class="shrink-0">
+          <LegendPanel />
+        </div>
       </div>
 
       <SimulationLog />
