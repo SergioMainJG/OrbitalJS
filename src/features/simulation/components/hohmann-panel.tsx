@@ -6,11 +6,12 @@ import {
   setShowHohmann,
   hohmannParams,
   setHohmannParams,
+  maxOrbitAU,
 } from '../stores/simulation-store';
 import { UNIVERSAL_CONSTS } from '@/shared/constants';
 import { clearSpaceshipTrail } from '@/presentation/renderers/draw-spaceship';
 import type { RenderBody } from '@/shared/types';
-import { SPACESHIP_NAME, SPACESHIP_MASS, BODY_COLLISION_RADII_AU } from '@/shared/types/spaceship';
+import { SPACESHIP_NAME, SPACESHIP_MASS } from '@/shared/types/spaceship';
 
 const { G } = UNIVERSAL_CONSTS;
 const KM_S_PER_AU_DAY = 1731.48;
@@ -20,7 +21,7 @@ export const HohmannPanel: Component = () => {
 
   const availablePlanets = createMemo(
     () => {
-      return bodies().filter((b) => b.name !== 'Sun' && b.name !== SPACESHIP_NAME);
+      return bodies().filter((b) => b.name !== 'Sun' && !b.name.startsWith(SPACESHIP_NAME));
     },
     [],
     {
@@ -143,8 +144,9 @@ export const HohmannPanel: Component = () => {
 
     // --- CORRECCIÓN DE SINGULARIDAD GRAVITACIONAL ---
     // Sacamos la nave del centro exacto del planeta usando el radio de colisión
-    const bodyRadius = BODY_COLLISION_RADII_AU[origin.name] ?? 0.02;
-    const offsetDistance = bodyRadius * 3; // Distancia segura fuera de la gravedad extrema del planeta
+    const baseRadius = (origin as RenderBody).radius ?? 5;
+    const dynamicRadiusAU = (baseRadius / 100) * maxOrbitAU();
+    const offsetDistance = dynamicRadiusAU * 3;
 
     // Si aceleramos (dv1 > 0), nos ponemos por delante. Si frenamos (dv1 < 0), nos ponemos por detrás.
     const sign = dv1 >= 0 ? 1 : -1;
@@ -170,7 +172,7 @@ export const HohmannPanel: Component = () => {
 
     // Reemplazar nave existente si la hay
     clearSpaceshipTrail();
-    setBodies([...bodies().filter((b) => b.name !== SPACESHIP_NAME), spaceship]);
+    setBodies([...bodies().filter((b) => !b.name.startsWith(SPACESHIP_NAME)), spaceship]);
   };
 
   return (

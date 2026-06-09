@@ -2,10 +2,14 @@ import type { BodyState, TrailPoint } from "@/shared/types";
 import { addTrailPoint } from "./body-renderer";
 import { SPACESHIP_NAME, SPACESHIP_TRAIL_LENGTH } from "@/shared/types/spaceship";
 
-let spaceshipTrail: TrailPoint[] = [];
+const spaceshipTrails = new Map<string, TrailPoint[]>();
 
-export function clearSpaceshipTrail(): void {
-  spaceshipTrail = [];
+export function clearSpaceshipTrail(spaceshipName?: string): void {
+  if (spaceshipName) {
+    spaceshipTrails.delete(spaceshipName);
+  } else {
+    spaceshipTrails.clear();
+  }
 }
 
 /**
@@ -29,13 +33,18 @@ export function drawSpaceship(
   const px = cx + body.x * scale;
   const py = cy - body.y * scale;
 
-  spaceshipTrail = addTrailPoint(spaceshipTrail, { x: px, y: py }, SPACESHIP_TRAIL_LENGTH);
+  if (!spaceshipTrails.has(body.name)) {
+    spaceshipTrails.set(body.name, []);
+  }
+  const trail = spaceshipTrails.get(body.name)!;
+  const updated = addTrailPoint(trail, { x: px, y: py }, SPACESHIP_TRAIL_LENGTH);
+  spaceshipTrails.set(body.name, updated);
 
   if (showTrajectory) {
-    for (let i = 1; i < spaceshipTrail.length; i++) {
-      const opacity = i / spaceshipTrail.length;
-      const prev = spaceshipTrail[i - 1]!;
-      const curr = spaceshipTrail[i]!;
+    for (let i = 1; i < updated.length; i++) {
+      const opacity = i / updated.length;
+      const prev = updated[i - 1]!;
+      const curr = updated[i]!;
 
       const r = Math.floor(opacity * 255);
       const g = 255;

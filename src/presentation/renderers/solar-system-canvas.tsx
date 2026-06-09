@@ -10,6 +10,7 @@ import {
   setCurrentDay,
   currentDay,
   simSpeed,
+  maxOrbitAU,
   MAX_ORBIT_AU,
   isRunning,
   dt,
@@ -28,11 +29,7 @@ import { getHoveredBody } from './body-hit-test';
 import { orbitalEnergy } from '@/core/physics/orbital-energy';
 import { SpaceshipLauncher } from './spaceship-launcher';
 import { drawSpaceship } from './draw-spaceship';
-import {
-  SPACESHIP_NAME,
-  SPACESHIP_COLLISION_RADIUS_AU,
-  BODY_COLLISION_RADII_AU,
-} from '@/shared/types/spaceship';
+import { SPACESHIP_NAME } from '@/shared/types/spaceship';
 import {
   tickComparison,
   isComparing,
@@ -487,8 +484,8 @@ function SolarSystemCanvas() {
           const dx = spaceship.x - body.x;
           const dy = spaceship.y - body.y;
           const dist = Math.sqrt(dx * dx + dy * dy);
-          const bodyRadiusAU =
-            BODY_COLLISION_RADII_AU[body.name] ?? SPACESHIP_COLLISION_RADIUS_AU + body.mass * 1e-26;
+          const baseRadius = body.radius ?? 5;
+          const bodyRadiusAU = (baseRadius / 100) * maxOrbitAU();
 
           // Ampliamos el radio de detección a * 2 para atrapar clicks cercanos al planeta
           if (dist < bodyRadiusAU * 2) {

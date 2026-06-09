@@ -65,7 +65,7 @@ const SimulationControls: Component = () => {
       canvas.launcherInstance.reset();
     }
 
-    setBodies((prev) => prev.filter((b) => b.name !== SPACESHIP_NAME));
+    setBodies((prev) => prev.filter((b) => !b.name.startsWith(SPACESHIP_NAME)));
     resetComparison();
 
     setTimeout(() => setIsRunning(true), 50);
@@ -74,7 +74,7 @@ const SimulationControls: Component = () => {
   const handleScenarioChange = (id: string) => {
     setSelectedScenario(id);
     setIsRunning(false);
-    setBodies((prev) => prev.filter((b) => b.name !== SPACESHIP_NAME));
+    setBodies((prev) => prev.filter((b) => !b.name.startsWith(SPACESHIP_NAME)));
     resetComparison();
 
     if (id === 'solar-system-full') {
@@ -95,7 +95,7 @@ const SimulationControls: Component = () => {
     setSelectedEpoch(epoch);
     setIsRunning(false);
     setIsLoading(true);
-    setBodies((prev) => prev.filter((b) => b.name !== SPACESHIP_NAME));
+    setBodies((prev) => prev.filter((b) => !b.name.startsWith(SPACESHIP_NAME)));
     resetComparison();
 
     try {

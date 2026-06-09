@@ -5,10 +5,9 @@ import {
   canvasToAU,
   createSpaceshipBody,
   dragToVelocity,
-  SPACESHIP_COLLISION_RADIUS_AU,
-  BODY_COLLISION_RADII_AU,
 } from "@/shared/types/spaceship";
 import { drawVelocityArrow, drawImpactMessage, clearSpaceshipTrail } from "./draw-spaceship";
+import { maxOrbitAU } from "@/features/simulation/stores/simulation-store";
 
 type OnLaunchCallback = (spaceship: BodyState) => void;
 type OnCancelCallback = () => void;
@@ -120,9 +119,8 @@ export class SpaceshipLauncher {
           const dx = spaceship.x - launcherBody.x;
           const dy = spaceship.y - launcherBody.y;
           const dist = Math.sqrt(dx * dx + dy * dy);
-          const bodyRadiusAU =
-            BODY_COLLISION_RADII_AU[launcherBody.name] ??
-            SPACESHIP_COLLISION_RADIUS_AU + launcherBody.mass * 1e-26;
+          const baseRadius = (launcherBody as RenderBody).radius ?? 5;
+          const bodyRadiusAU = (baseRadius / 100) * maxOrbitAU();
 
           if (dist > bodyRadiusAU * 1.5) {
             delete spaceship.launchedFrom;
@@ -139,8 +137,8 @@ export class SpaceshipLauncher {
         const dy = spaceship.y - body.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
 
-        const bodyRadiusAU =
-          BODY_COLLISION_RADII_AU[body.name] ?? SPACESHIP_COLLISION_RADIUS_AU + body.mass * 1e-26;
+        const baseRadius = (body as RenderBody).radius ?? 5;
+        const bodyRadiusAU = (baseRadius / 100) * maxOrbitAU();
 
         if (dist < bodyRadiusAU) {
           const impactPx = {
@@ -159,6 +157,7 @@ export class SpaceshipLauncher {
       if (destroyed) {
         // Extraemos solo la nave destruida del array universal
         updatedBodies = updatedBodies.filter((b) => b.name !== spaceship.name);
+        clearSpaceshipTrail(spaceship.name);
       }
     }
 
