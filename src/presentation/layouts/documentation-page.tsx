@@ -1,33 +1,13 @@
 import { For, Show } from 'solid-js';
-import type { Component, JSX } from 'solid-js';
+import type { Component } from 'solid-js';
 
-type SectionProps = {
-  id: string;
-  eyebrow?: string;
-  title: string;
-  children: JSX.Element;
-};
-
-type CardItem = {
-  title: string;
-  body: string;
-};
-
-type TableRow = {
-  first: string;
-  second: string;
-  third?: string;
-};
-
-type ScreenshotSlotProps = {
-  id: string;
-  title: string;
-  description: string;
-  expectedCapture: string;
-  imageUrl?: string;
-  alt?: string;
-  heightClass?: string;
-};
+import Section from './documentation/section';
+import InfoCard from './documentation/info-card';
+import type { CardItem } from './documentation/info-card';
+import FormulaBlock from './documentation/formula-block';
+import DataTable from './documentation/data-table';
+import type { TableRow } from './documentation/data-table';
+import ScreenshotSlot from './documentation/screenshot-slot';
 
 const projectMembers = [
   'Sabrina Ojeda',
@@ -281,123 +261,6 @@ const references: ReferenceItem[] = [
     description: ' — Biblioteca utilizada para graficar el historial de energía mecánica.',
   },
 ];
-
-const Section: Component<SectionProps> = (props) => (
-  <section
-    id={props.id}
-    class="doc-section border-base-300 print:border-base-300 scroll-mt-24 border-t py-12 print:py-8"
-  >
-    <div class="mb-6">
-      {props.eyebrow && (
-        <p class="text-primary mb-2 text-sm font-semibold tracking-[0.22em] uppercase">
-          {props.eyebrow}
-        </p>
-      )}
-      <h2 class="text-base-content text-3xl font-bold tracking-tight md:text-4xl">{props.title}</h2>
-    </div>
-    <div class="text-base-content/80 space-y-6 text-base leading-8">{props.children}</div>
-  </section>
-);
-
-const InfoCard: Component<CardItem> = (props) => (
-  <article class="border-base-300 bg-base-100 rounded-2xl border p-6 shadow-sm print:break-inside-avoid">
-    <h3 class="text-base-content mb-3 text-lg font-bold">{props.title}</h3>
-    <p class="text-base-content/75 leading-7">{props.body}</p>
-  </article>
-);
-
-const FormulaBlock: Component<{ title: string; formulas: string[]; note?: string }> = (props) => (
-  <figure class="border-base-300 bg-base-200/60 rounded-2xl border p-5 print:break-inside-avoid">
-    <figcaption class="text-base-content/60 mb-3 text-sm font-semibold tracking-[0.18em] uppercase">
-      {props.title}
-    </figcaption>
-    <div class="space-y-3">
-      <For each={props.formulas}>
-        {(formula) => (
-          <pre class="bg-base-100 text-base-content overflow-x-auto rounded-xl p-4 font-mono text-sm leading-7">
-            <code>{formula}</code>
-          </pre>
-        )}
-      </For>
-    </div>
-    {props.note && <p class="text-base-content/70 mt-4 text-sm leading-7">{props.note}</p>}
-  </figure>
-);
-
-const DataTable: Component<{ headers: [string, string, string]; rows: TableRow[] }> = (props) => (
-  <div class="border-base-300 overflow-x-auto rounded-2xl border print:break-inside-avoid">
-    <table class="table w-full text-sm">
-      <thead class="bg-base-200 text-base-content">
-        <tr>
-          <For each={props.headers}>
-            {(header) => <th class="px-4 py-4 text-left font-bold">{header}</th>}
-          </For>
-        </tr>
-      </thead>
-      <tbody>
-        <For each={props.rows}>
-          {(row) => (
-            <tr class="border-base-300 border-t align-top">
-              <td class="text-base-content px-4 py-4 font-semibold">{row.first}</td>
-              <td class="text-base-content/75 px-4 py-4">{row.second}</td>
-              <td class="text-base-content/75 px-4 py-4">{row.third}</td>
-            </tr>
-          )}
-        </For>
-      </tbody>
-    </table>
-  </div>
-);
-
-const ScreenshotSlot: Component<ScreenshotSlotProps> = (props) => (
-  <figure
-    id={props.id}
-    class="border-primary/40 bg-primary/5 rounded-3xl border-2 border-dashed p-6 print:break-inside-avoid"
-  >
-    <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-      <div>
-        <p class="text-primary mb-2 text-sm font-semibold tracking-[0.18em] uppercase">
-          <Show when={props.imageUrl} fallback={props.title}>
-            Captura del sistema
-          </Show>
-        </p>
-        <h3 class="text-base-content text-xl font-bold">{props.title}</h3>
-        <p class="text-base-content/75 mt-3 leading-7">{props.description}</p>
-      </div>
-    </div>
-
-    <div class="mt-6">
-      <Show
-        when={props.imageUrl}
-        fallback={
-          <div class="border-base-300 bg-base-100 text-base-content/60 flex min-h-72 items-center justify-center rounded-2xl border border-dashed p-8 text-center">
-            <div>
-              <p class="text-base-content/70 text-lg font-bold">{props.expectedCapture}</p>
-            </div>
-          </div>
-        }
-      >
-        <div
-          class={`border-base-300 bg-base-200/30 flex items-center justify-center overflow-hidden rounded-2xl border p-2 shadow-md ${props.heightClass || 'h-48 md:h-64'}`}
-        >
-          <img
-            src={props.imageUrl}
-            alt={props.alt || props.title}
-            loading="lazy"
-            decoding="async"
-            class="max-h-full max-w-full rounded-lg object-contain"
-          />
-        </div>
-      </Show>
-    </div>
-
-    <figcaption class="text-base-content/65 mt-4 text-sm leading-7">
-      <Show when={props.imageUrl} fallback={props.description}>
-        Figura {props.id}: {props.expectedCapture}
-      </Show>
-    </figcaption>
-  </figure>
-);
 
 const DocumentationPage: Component = () => {
   return (
