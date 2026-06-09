@@ -4,7 +4,7 @@ const DocumentationPage: Component = () => {
   const contributors = [
     { name: 'Sabrina Ojeda', github: 'https://github.com/sabrinaAojeda' },
     { name: 'Katherine Lopez', github: 'https://github.com/KathLoppz' },
-    { name: 'Luis Diaz', github: 'https://github.com/KathLoppz' }, // As defined in README
+    { name: 'Luis Diaz', github: 'https://github.com/KathLoppz' },
     { name: 'Joel Freire', github: 'https://github.com/JoelFreire-dev' },
     { name: 'Sergio Arce', github: 'https://github.com/SergioMainJG' },
   ];
