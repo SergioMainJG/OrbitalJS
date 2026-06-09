@@ -275,7 +275,7 @@ const DocumentationPage: Component = () => {
       filename: 'documentacion-orbitaljs.pdf',
       image: { type: 'jpeg', quality: 0.98 },
       html2canvas: { scale: 3, useCORS: true },
-      jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
+      jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' as const },
     };
 
     try {
