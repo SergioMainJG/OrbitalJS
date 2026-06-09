@@ -370,6 +370,44 @@ const DocumentationPage: Component = () => {
             alt="Simulación completa"
             heightClass="h-64 sm:h-80 md:h-[450px]"
           />
+          <div class="mt-8 grid gap-6 md:grid-cols-2">
+            <ScreenshotSlot
+              id="screenshot-visualizador"
+              title="Visualizador 2D del Canvas"
+              description="Representación gráfica interactiva del Sol, los planetas y naves en órbita con estelas de trayectoria."
+              expectedCapture="Vista del canvas orbital 2D interactivo."
+              imageUrl="/images/xl-visualizador.avif"
+              alt="Visualizador Canvas"
+              heightClass="h-48 md:h-64"
+            />
+            <ScreenshotSlot
+              id="screenshot-controles"
+              title="Panel de Controles de Simulación"
+              description="Permite pausar/reproducir, ajustar la velocidad (hasta 10x), cambiar de integrador (Euler/RK4) y configurar parámetros de visualización."
+              expectedCapture="Controles de la simulación física."
+              imageUrl="/images/xl-controles.avif"
+              alt="Panel de Controles"
+              heightClass="h-48 md:h-64"
+            />
+            <ScreenshotSlot
+              id="screenshot-logs"
+              title="Registro de Eventos (Logs)"
+              description="Bitácora reactiva que notifica cambios de integradores, lanzamientos de naves y alertas de deriva de energía."
+              expectedCapture="Registro de logs en tiempo real."
+              imageUrl="/images/xl-logs.avif"
+              alt="Registro de logs"
+              heightClass="h-48 md:h-64"
+            />
+            <ScreenshotSlot
+              id="screenshot-informacion-extra"
+              title="Cálculo de Órbitas Hohmann y Lagrange"
+              description="Visualización interactiva y cálculos en tiempo real de maniobras de transferencia y puntos de equilibrio gravitacional."
+              expectedCapture="Panel teórico de Hohmann y Lagrange."
+              imageUrl="/images/xl-informacion-extra.avif"
+              alt="Cálculo de Hohmann y Lagrange"
+              heightClass="h-48 md:h-64"
+            />
+          </div>
         </Section>
 
         <Section id="matematica" eyebrow="Fundamento matemático" title="Modelo matemático y físico">
@@ -450,6 +488,26 @@ const DocumentationPage: Component = () => {
             ]}
             note="La deriva de energía no es un dato decorativo: es una señal de precisión numérica."
           />
+          <div class="mt-8 grid gap-6 md:grid-cols-2">
+            <ScreenshotSlot
+              id="screenshot-graficas-energia"
+              title="Monitor Gráfico de Energía"
+              description="Gráfica en tiempo real de la energía cinética (Ecin), potencial (Epot) y energía total mecánica. Permite ver el desfasaje o estabilidad de la simulación."
+              expectedCapture="Gráficas de energía mecánica."
+              imageUrl="/images/xl-graphics.avif"
+              alt="Gráficas de Energía"
+              heightClass="h-48 md:h-64"
+            />
+            <ScreenshotSlot
+              id="screenshot-validaciones"
+              title="Panel de Validación Numérica"
+              description="Comprobación en tiempo real del error de posición absoluto respecto a la órbita de referencia de la Tierra, alertando si se excede el umbral tolerado."
+              expectedCapture="Panel de validación de error en UA."
+              imageUrl="/images/xl-validations.avif"
+              alt="Panel de validaciones"
+              heightClass="h-48 md:h-64"
+            />
+          </div>
         </Section>
 
         <Section id="nasa" eyebrow="Datos reales" title="Integración con NASA JPL Horizons">
@@ -478,6 +536,55 @@ const DocumentationPage: Component = () => {
         <Section id="stack" eyebrow="Stack tecnológico" title="Tecnologías utilizadas">
           <p>El stack debe justificarse por su función dentro del sistema.</p>
           <DataTable headers={['Tecnología', 'Uso', 'Justificación']} rows={stackRows} />
+          <div class="mt-8">
+            <h3 class="text-base-content mb-4 text-2xl font-bold">
+              Diseño Adaptativo (Mobile first & Responsiveness)
+            </h3>
+            <p class="mb-6 leading-7">
+              El simulador ha sido diseñado utilizando CSS flexible y rejillas (Grid y Flexbox) para
+              garantizar que la experiencia interactiva sea fluida y completamente utilizable tanto
+              en ordenadores de escritorio como en dispositivos móviles. A continuación se muestran
+              capturas de la interfaz adaptada a pantallas móviles.
+            </p>
+            <div class="grid gap-6 sm:grid-cols-2 md:grid-cols-4">
+              <ScreenshotSlot
+                id="screenshot-mobile-sim"
+                title="Canvas en Móvil"
+                description="Visualización del canvas en pantallas estrechas con zoom optimizado."
+                expectedCapture="Canvas en modo móvil."
+                imageUrl="/images/sm-sim.avif"
+                alt="Canvas en Móvil"
+                heightClass="h-56"
+              />
+              <ScreenshotSlot
+                id="screenshot-mobile-controles"
+                title="Controles en Móvil"
+                description="Adaptación vertical de los selectores de escenario y velocidad."
+                expectedCapture="Panel de controles en móvil."
+                imageUrl="/images/sm-controles.avif"
+                alt="Controles en Móvil"
+                heightClass="h-56"
+              />
+              <ScreenshotSlot
+                id="screenshot-mobile-graphics"
+                title="Gráficas en Móvil"
+                description="Ajuste adaptativo de las gráficas Chart.js de energía."
+                expectedCapture="Monitor de energía en móvil."
+                imageUrl="/images/sm-graphics.avif"
+                alt="Gráficas en Móvil"
+                heightClass="h-56"
+              />
+              <ScreenshotSlot
+                id="screenshot-mobile-legend"
+                title="Leyenda en Móvil"
+                description="Panel de leyenda e información adaptado para pantallas táctiles."
+                expectedCapture="Leyenda en móvil."
+                imageUrl="/images/sm-legend.avif"
+                alt="Leyenda en móvil"
+                heightClass="h-56"
+              />
+            </div>
+          </div>
         </Section>
 
         <Section id="conclusiones" eyebrow="Cierre" title="Conclusiones">
