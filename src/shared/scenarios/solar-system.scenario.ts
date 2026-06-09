@@ -1,7 +1,6 @@
 import type { SimulationScenario } from "@/core/contracts/scenario.contract";
 import planetsData from "@/data/planets.json";
 
-// Gravitational constant in AU³ / (M☉ · day²)
 const G = (4 * Math.PI * Math.PI) / (365.25 * 365.25);
 
 const SUN_MASS_KG = 1.989e30;
@@ -23,6 +22,10 @@ const FALLBACK_MASSES: Record<string, number> = {
   Uranus: 4.366e-5,
   Neptune: 5.151e-5,
   Pluto: 7.3e-9,
+  Charon: 7.97e-10,
+  Haumea: 2.01e-9,
+  Makemake: 1.56e-9,
+  Eris: 8.35e-9,
 };
 
 const getPlanetData = (name: string, fallbackX: number, fallbackVy: number) => {
@@ -36,25 +39,50 @@ const getPlanetData = (name: string, fallbackX: number, fallbackVy: number) => {
       vy: fallbackVy,
     };
   }
+
+  let x = planet.stateVector.x;
+  let y = planet.stateVector.y;
+  let vx = planet.stateVector.vx;
+  let vy = planet.stateVector.vy;
+
+  if (name === "Charon") {
+    const pluto = planetsData.planets?.find((p) => p.name === "Pluto");
+    if (pluto) {
+      const px = pluto.stateVector.x;
+      const py = pluto.stateVector.y;
+      const dx = px;
+      const dy = py;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist > 0) {
+        const ux = dx / dist;
+        const uy = dy / dist;
+        x = px + ux * 0.8;
+        y = py + uy * 0.8;
+        vx = pluto.stateVector.vx;
+        vy = pluto.stateVector.vy;
+      }
+    }
+  }
+
   return {
     mass: planet.physics.mass / SUN_MASS_KG,
-    x: planet.stateVector.x,
-    y: planet.stateVector.y,
-    vx: planet.stateVector.vx,
-    vy: planet.stateVector.vy,
+    x,
+    y,
+    vx,
+    vy,
   };
 };
 
 /**
  * N-Body real initial conditions from JPL Horizons (J2000 epoch).
- * Sun + inner/outer planets + Ceres + Pluto.
+ * Sun + inner/outer planets + Ceres + Pluto + Charon + Haumea + Makemake + Eris.
  */
 export const SOLAR_SYSTEM_SCENARIO: SimulationScenario = {
   id: "solar-system-full",
   name: "Sistema Solar Real (J2000)",
   description:
     "Sol + planetas principales y cuerpos pequeños con efemérides reales de la NASA JPL Horizons (J2000)",
-  maxOrbitAU: 42.0,
+  maxOrbitAU: 80.0,
   bodies: [
     { name: "Sun", mass: 1, x: 0, y: 0, vx: 0, vy: 0 },
     { name: "Mercury", ...getPlanetData("Mercury", 0.387, vCirc(0.387)) },
@@ -67,5 +95,9 @@ export const SOLAR_SYSTEM_SCENARIO: SimulationScenario = {
     { name: "Uranus", ...getPlanetData("Uranus", 19.201, vCirc(19.201)) },
     { name: "Neptune", ...getPlanetData("Neptune", 30.047, vCirc(30.047)) },
     { name: "Pluto", ...getPlanetData("Pluto", 39.482, vCirc(39.482)) },
+    { name: "Charon", ...getPlanetData("Charon", 40.282, vCirc(40.282)) },
+    { name: "Haumea", ...getPlanetData("Haumea", 43.218, vCirc(43.218)) },
+    { name: "Makemake", ...getPlanetData("Makemake", 45.715, vCirc(45.715)) },
+    { name: "Eris", ...getPlanetData("Eris", 67.668, vCirc(67.668)) },
   ],
 };

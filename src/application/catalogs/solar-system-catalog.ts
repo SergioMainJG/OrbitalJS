@@ -1,4 +1,5 @@
 import type { SimulationScenario } from "@/core/contracts/scenario.contract";
+import type { BodyState } from "@/shared/types";
 import { SOLAR_SYSTEM_SCENARIO } from "@/shared/scenarios/solar-system.scenario";
 import planetsData from "@/data/planets.json";
 import { fetchAllPlanets } from "@/shared/utils/jpl-horizons-fetcher";
@@ -6,6 +7,24 @@ import { parseHorizonsResponse } from "@/shared/utils/jpl-horizons-parser";
 import type { PlanetKey } from "@/shared/utils/jpl-horizons-fetcher";
 
 const SUN_MASS_KG = 1.989e30;
+
+function adjustPlutoCharonSeparation(bodies: BodyState[]): void {
+  const pluto = bodies.find((b) => b.name === "Pluto");
+  const charon = bodies.find((b) => b.name === "Charon");
+  if (pluto && charon) {
+    const dx = pluto.x;
+    const dy = pluto.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist > 0) {
+      const ux = dx / dist;
+      const uy = dy / dist;
+      charon.x = pluto.x + ux * 0.8;
+      charon.y = pluto.y + uy * 0.8;
+      charon.vx = pluto.vx;
+      charon.vy = pluto.vy;
+    }
+  }
+}
 
 export class SolarSystemCatalog {
   getDefaultScenario(): SimulationScenario {
@@ -25,13 +44,14 @@ export class SolarSystemCatalog {
           vy: p.stateVector.vy,
         })),
       ];
+      adjustPlutoCharonSeparation(bodies);
       return {
         id: "solar-system-real",
         name: "Sistema Solar Real (J2000)",
-        description: `Sol + 4 planetas interiores con efemérides reales de la NASA en la época ${planetsData.epoch}`,
+        description: `Sol + planetas principales y cuerpos menores con efemérides reales de la NASA en la época ${planetsData.epoch}`,
         epoch: planetsData.epoch,
         bodies,
-        maxOrbitAU: 2.0,
+        maxOrbitAU: 80.0,
       };
     }
 
@@ -54,13 +74,15 @@ export class SolarSystemCatalog {
       }
     }
 
+    adjustPlutoCharonSeparation(bodies);
+
     return {
       id: `solar-system-historical-${epoch}`,
       name: `Sistema Solar (${epoch})`,
-      description: `Sol + 4 planetas interiores en época histórica: ${epoch}`,
+      description: `Sol + planetas principales y cuerpos menores en época histórica: ${epoch}`,
       epoch,
       bodies,
-      maxOrbitAU: 2.0,
+      maxOrbitAU: 80.0,
     };
   }
 }

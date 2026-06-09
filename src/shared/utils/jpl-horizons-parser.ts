@@ -17,10 +17,10 @@
 import type {
   HorizonsRawResponse,
   PlanetInitialConditions,
-  PlanetPhysics,
   StateVector,
 } from "@/shared/types/horizons";
 import type { PlanetKey } from "./jpl-horizons-fetcher";
+import targetMapping from "@/data/target-mapping.json";
 
 // ---------------------------------------------------------------------------
 // Constantes físicas de los planetas interiores
@@ -40,94 +40,6 @@ function gmToAuD2(gmKm3s2: number): number {
   return gmKm3s2 * KM3_S2_TO_AU3_D2;
 }
 
-/**
- * Propiedades físicas fijas por planeta.
- * GM oficial de IAU/JPL en km³/s².
- * Masa en kg según NASA Planetary Fact Sheet.
- */
-const PLANET_PHYSICS: Record<PlanetKey, PlanetPhysics> = {
-  mercury: {
-    mass: 3.301e23,
-    radiusKm: 2439.7,
-    gm: gmToAuD2(22032.09),
-  },
-  venus: {
-    mass: 4.8673e24,
-    radiusKm: 6051.8,
-    gm: gmToAuD2(324858.592),
-  },
-  earth: {
-    mass: 5.9722e24,
-    radiusKm: 6371.0,
-    gm: gmToAuD2(398600.435),
-  },
-  mars: {
-    mass: 6.4169e23,
-    radiusKm: 3389.5,
-    gm: gmToAuD2(42828.375),
-  },
-  ceres: {
-    mass: 9.393e20,
-    radiusKm: 469.73,
-    gm: gmToAuD2(62.63),
-  },
-  jupiter: {
-    mass: 1.898e27,
-    radiusKm: 71492.0,
-    gm: gmToAuD2(126686511.0),
-  },
-  saturn: {
-    mass: 5.683e26,
-    radiusKm: 60268.0,
-    gm: gmToAuD2(37931187.0),
-  },
-  uranus: {
-    mass: 8.681e25,
-    radiusKm: 25559.0,
-    gm: gmToAuD2(5793939.0),
-  },
-  neptune: {
-    mass: 1.024e26,
-    radiusKm: 24764.0,
-    gm: gmToAuD2(6836529.0),
-  },
-  pluto: {
-    mass: 1.303e22,
-    radiusKm: 1188.3,
-    gm: gmToAuD2(870.3),
-  },
-};
-
-const PLANET_NAMES: Record<PlanetKey, string> = {
-  mercury: "Mercury",
-  venus: "Venus",
-  earth: "Earth",
-  mars: "Mars",
-  ceres: "Ceres",
-  jupiter: "Jupiter",
-  saturn: "Saturn",
-  uranus: "Uranus",
-  neptune: "Neptune",
-  pluto: "Pluto",
-};
-
-/**
- * Colores hex para renderizado en Canvas 2D.
- * Basados en la apariencia visual real de cada planeta.
- */
-const PLANET_COLORS: Record<PlanetKey, string> = {
-  mercury: "#b5b5b5", // gris rocoso
-  venus: "#e8cda0", // dorado pálido / nubes de ácido sulfúrico
-  earth: "#4fa3e0", // azul oceánico
-  mars: "#c1440e", // rojo óxido de hierro
-  ceres: "#a0a0a0", // gris asteroide
-  jupiter: "#d4a373", // beige/marrón bandas
-  saturn: "#e9c46a", // amarillo anillos
-  uranus: "#a8dadc", // azul cian pálido
-  neptune: "#457b9d", // azul profundo
-  pluto: "#f4a261", // naranja/marrón helado
-};
-
 // ---------------------------------------------------------------------------
 // Parser principal
 // ---------------------------------------------------------------------------
@@ -145,19 +57,30 @@ export function parseHorizonsResponse(
   response: HorizonsRawResponse,
   planetKey: PlanetKey,
 ): PlanetInitialConditions {
-  const { raw, params } = response;
+  const { raw } = response;
 
   const ephemerisBlock = extractEphemerisBlock(raw);
   const stateVector = parseStateVector(ephemerisBlock);
   const epoch = parseEpoch(ephemerisBlock);
 
+  const target = targetMapping.targets.find((t) => t.key === planetKey);
+  if (!target) {
+    throw new Error(
+      `[jpl-horizons-parser] Target key "${planetKey}" not found in target-mapping.json`,
+    );
+  }
+
   return {
-    name: PLANET_NAMES[planetKey],
-    naifId: params.command,
+    name: target.displayName,
+    naifId: target.naifId,
     epoch,
     stateVector,
-    physics: PLANET_PHYSICS[planetKey],
-    color: PLANET_COLORS[planetKey],
+    physics: {
+      mass: target.physics.massKg,
+      radiusKm: target.physics.radiusKm,
+      gm: gmToAuD2(target.physics.gmKm3s2),
+    },
+    color: target.render.color,
   };
 }
 

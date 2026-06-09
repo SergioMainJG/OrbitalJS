@@ -9,6 +9,7 @@
  */
 
 import type { HorizonsRawResponse, HorizonsRequestParams } from "@/shared/types/horizons";
+import targetMapping from "@/data/target-mapping.json";
 
 // ---------------------------------------------------------------------------
 // Constantes
@@ -26,12 +27,16 @@ export const PLANET_NAIF_IDS = {
   venus: "299",
   earth: "399",
   mars: "499",
-  ceres: "2000001",
   jupiter: "599",
   saturn: "699",
   uranus: "799",
   neptune: "899",
+  ceres: "1", // Ceres es el #1 en el catálogo de asteroides
   pluto: "999",
+  charon: "901", // ID de satélite para Caronte
+  haumea: "136108",
+  makemake: "136472",
+  eris: "136199",
 } as const;
 
 export type PlanetKey = keyof typeof PLANET_NAIF_IDS;
@@ -46,14 +51,14 @@ export type PlanetKey = keyof typeof PLANET_NAIF_IDS;
  * Documentación de parámetros:
  * https://ssd-api.jpl.nasa.gov/doc/horizons.html
  */
-function buildQueryParams(params: HorizonsRequestParams): URLSearchParams {
+function buildQueryParams(params: HorizonsRequestParams & { center?: string }): URLSearchParams {
   return new URLSearchParams({
     format: "text",
     COMMAND: `'${params.command}'`,
     OBJ_DATA: "YES", // incluye datos físicos del objeto
     MAKE_EPHEM: "YES",
     EPHEM_TYPE: "VECTORS", // tabla de vectores de estado
-    CENTER: "'500@10'", // Sol, centroide (NAIF 10)
+    CENTER: `'${params.center ?? "500@10"}'`, // Sol, centroide (NAIF 10)
     REF_PLANE: "ECLIPTIC", // plano eclíptico J2000
     REF_SYSTEM: "J2000",
     COORD_TYPE: "GEODETIC",
@@ -85,15 +90,17 @@ function buildQueryParams(params: HorizonsRequestParams): URLSearchParams {
  * @throws        - Error con mensaje descriptivo si la petición falla
  */
 export async function fetchHorizonsVector(
-  naifId: string,
+  command: string,
   epoch: string,
+  center: string = "500@10",
 ): Promise<HorizonsRawResponse> {
-  const params: HorizonsRequestParams = {
-    command: naifId,
+  const params: HorizonsRequestParams & { center: string } = {
+    command,
     startTime: epoch,
     // Horizons necesita start < stop; pedimos un día después para obtener 1 entrada
     stopTime: incrementDate(epoch),
     stepSize: "1d",
+    center,
   };
 
   const url = `${HORIZONS_BASE_URL}?${buildQueryParams(params).toString()}`;
@@ -104,14 +111,14 @@ export async function fetchHorizonsVector(
     response = await fetch(url);
   } catch (cause) {
     throw new Error(
-      `[jpl-horizons-fetcher] Error de red al contactar JPL Horizons para NAIF ${naifId}: ${String(cause)}`,
+      `[jpl-horizons-fetcher] Error de red al contactar JPL Horizons para COMMAND ${command}: ${String(cause)}`,
       { cause: cause },
     );
   }
 
   if (!response.ok) {
     throw new Error(
-      `[jpl-horizons-fetcher] HTTP ${response.status} para NAIF ${naifId}. URL: ${url}`,
+      `[jpl-horizons-fetcher] HTTP ${response.status} para COMMAND ${command}. URL: ${url}`,
     );
   }
 
@@ -121,7 +128,7 @@ export async function fetchHorizonsVector(
   // Si no aparecen, la respuesta es un error de la API (e.g. NAIF inválido).
   if (!raw.includes("$$SOE")) {
     throw new Error(
-      `[jpl-horizons-fetcher] Respuesta inesperada de JPL Horizons para NAIF ${naifId}. ` +
+      `[jpl-horizons-fetcher] Respuesta inesperada de JPL Horizons para COMMAND ${command}. ` +
         `Posible error: ${extractApiError(raw)}`,
     );
   }
@@ -144,10 +151,15 @@ export async function fetchAllPlanets(epoch: string): Promise<Map<PlanetKey, Hor
 
   for (const [key, naifId] of entries) {
     try {
+      // Look up command and center from target-mapping.json
+      const target = targetMapping.targets.find((t) => t.key === key);
+      const command = target ? target.horizons.command : naifId;
+      const center = target ? target.horizons.center : "500@10";
+
       // eslint-disable-next-line no-await-in-loop
-      const raw = await fetchHorizonsVector(naifId, epoch);
+      const raw = await fetchHorizonsVector(command, epoch, center);
       map.set(key, raw);
-      console.info(`[jpl-horizons-fetcher] ✓ ${key} (NAIF ${naifId})`);
+      console.info(`[jpl-horizons-fetcher] ✓ ${key} (Command ${command})`);
       // Evitar saturar la API de JPL (rate limit/concurrencia)
       // eslint-disable-next-line no-await-in-loop
       await new Promise((resolve) => setTimeout(resolve, 500));
