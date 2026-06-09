@@ -8,9 +8,9 @@ import {
   setHohmannParams,
 } from '../stores/simulation-store';
 import { UNIVERSAL_CONSTS } from '@/shared/constants';
-import { SPACESHIP_NAME, SPACESHIP_MASS } from '@/shared/types/spaceship';
 import { clearSpaceshipTrail } from '@/presentation/renderers/draw-spaceship';
 import type { RenderBody } from '@/shared/types';
+import { SPACESHIP_NAME, SPACESHIP_MASS, BODY_COLLISION_RADII_AU } from '@/shared/types/spaceship';
 
 const { G } = UNIVERSAL_CONSTS;
 const KM_S_PER_AU_DAY = 1731.48;
@@ -129,36 +129,46 @@ export const HohmannPanel: Component = () => {
     const origin = calc.originBody;
     const dv1 = calc.dv1;
 
-    // Planet velocity magnitude
+    // Magnitud de la velocidad del planeta
     const v = Math.sqrt(origin.vx * origin.vx + origin.vy * origin.vy);
     if (v === 0) return;
 
-    // Tangent unit vector (along velocity direction)
+    // Vector unitario tangencial (en la dirección de la velocidad)
     const tx = origin.vx / v;
     const ty = origin.vy / v;
 
-    // Spacecraft velocity: origin velocity + tangential boost
+    // Velocidad de la nave: velocidad del planeta + impulso de Hohmann
     const vxShip = origin.vx + dv1 * tx;
     const vyShip = origin.vy + dv1 * ty;
+
+    // --- CORRECCIÓN DE SINGULARIDAD GRAVITACIONAL ---
+    // Sacamos la nave del centro exacto del planeta usando el radio de colisión
+    const bodyRadius = BODY_COLLISION_RADII_AU[origin.name] ?? 0.02;
+    const offsetDistance = bodyRadius * 3; // Distancia segura fuera de la gravedad extrema del planeta
+
+    // Si aceleramos (dv1 > 0), nos ponemos por delante. Si frenamos (dv1 < 0), nos ponemos por detrás.
+    const sign = dv1 >= 0 ? 1 : -1;
+    const offsetX = tx * offsetDistance * sign;
+    const offsetY = ty * offsetDistance * sign;
 
     const spaceship: RenderBody = {
       name: SPACESHIP_NAME,
       mass: SPACESHIP_MASS,
-      x: origin.x,
-      y: origin.y,
+      x: origin.x + offsetX,
+      y: origin.y + offsetY,
       vx: vxShip,
       vy: vyShip,
       radius: 4,
       color: '#00ffff',
       launchedFrom: origin.name,
-      // Hohmann properties for the physics loop (BUG-4)
+      // Propiedades de Hohmann para aplicar el segundo impulso en el loop de física
       hohmannDv2Applied: false,
       hohmannTargetR: calc.r2,
       hohmannDv2Val: calc.dv2,
       hohmannDirection: calc.r2 > calc.r1 ? 'out' : 'in',
     };
 
-    // Replace existing spaceship if any
+    // Reemplazar nave existente si la hay
     clearSpaceshipTrail();
     setBodies([...bodies().filter((b) => b.name !== SPACESHIP_NAME), spaceship]);
   };
