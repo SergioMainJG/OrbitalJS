@@ -518,7 +518,7 @@ const DocumentationPage: Component = () => {
           </p>
           <div class="alert border-info bg-info/10 text-base-content mt-4 border-l-4">
             <div>
-              <h4 class="font-bold">Intercepción de peticiones y CORS (Cloudflare Worker)</h4>
+              <h3 class="font-bold">Intercepción de peticiones y CORS (Cloudflare Worker)</h3>
               <p class="mt-2 leading-7">
                 Dado que la API pública de la NASA no está configurada para admitir cabeceras CORS
                 en entornos web de producción (bloqueando las peticiones directas desde el

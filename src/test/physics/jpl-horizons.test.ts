@@ -117,7 +117,7 @@ describe("fetchHorizonsVector", () => {
     await fetchHorizonsVector("199", "2000-Jan-01");
 
     const calledUrl = vi.mocked(fetch).mock.calls[0]?.[0] as string;
-    expect(calledUrl).toContain("ssd.jpl.nasa.gov");
+    expect(calledUrl).toContain("jpl-cors-proxy.arce-roldan-sergio.workers.dev");
     expect(calledUrl).toContain("COMMAND");
     expect(calledUrl).toContain("199");
   });
