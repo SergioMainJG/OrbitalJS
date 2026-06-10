@@ -43,6 +43,11 @@ bun run fetch:planets
 ```
 Este comando consulta secuencialmente el servicio de la NASA, parsea las coordenadas tridimensionales en vectores cartesianos J2000 y actualiza el archivo de fallback local.
 
+#### Proxy de CORS para Producción (Cloudflare Worker)
+Dado que la API oficial de la NASA JPL Horizons (`https://ssd.jpl.nasa.gov/api/horizons.api`) no admite peticiones CORS desde navegadores en entornos de producción, el simulador interactivo realiza las consultas HTTP en tiempo real a través de un proxy inverso implementado como un **Cloudflare Worker**:
+* URL del proxy: `https://jpl-cors-proxy.arce-roldan-sergio.workers.dev`
+* El worker intercepta la petición del cliente, le inyecta las cabeceras CORS necesarias (`Access-Control-Allow-Origin: *`) y la redirige al servicio oficial de la NASA, permitiendo que la simulación obtenga efemérides planetarias dinámicas desde cualquier navegador web sin bloqueos de seguridad.
+
 ## Scripts disponibles
 
 | Comando                 | Acción                                              |

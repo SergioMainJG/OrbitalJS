@@ -15,7 +15,7 @@ import targetMapping from "@/data/target-mapping.json";
 // Constantes
 // ---------------------------------------------------------------------------
 
-const HORIZONS_BASE_URL = "https://ssd.jpl.nasa.gov/api/horizons.api";
+const HORIZONS_BASE_URL = "https://jpl-cors-proxy.arce-roldan-sergio.workers.dev";
 
 /**
  * NAIF IDs de los planetas interiores.

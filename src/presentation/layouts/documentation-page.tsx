@@ -516,6 +516,28 @@ const DocumentationPage: Component = () => {
             efemérides reales. Una efeméride describe la posición y velocidad de un cuerpo celeste
             en un instante determinado. OrbitalJS usa estos vectores como condiciones iniciales.
           </p>
+          <div class="alert border-info bg-info/10 text-base-content mt-4 border-l-4">
+            <div>
+              <h4 class="font-bold">Intercepción de peticiones y CORS (Cloudflare Worker)</h4>
+              <p class="mt-2 leading-7">
+                Dado que la API pública de la NASA no está configurada para admitir cabeceras CORS
+                en entornos web de producción (bloqueando las peticiones directas desde el
+                navegador), el simulador utiliza un <strong>Cloudflare Worker</strong> como proxy
+                inverso:
+              </p>
+              <ul class="mt-2 list-disc space-y-1 pl-6">
+                <li>
+                  URL del Proxy: <code>https://jpl-cors-proxy.arce-roldan-sergio.workers.dev</code>
+                </li>
+                <li>
+                  <strong>Función:</strong> El worker intercepta la llamada, añade las cabeceras
+                  estándar <code>Access-Control-Allow-Origin: *</code>, redirige la consulta a los
+                  servidores de JPL NASA de forma segura y devuelve la respuesta al cliente sin
+                  bloqueos de seguridad en el navegador.
+                </li>
+              </ul>
+            </div>
+          </div>
         </Section>
 
         <Section
