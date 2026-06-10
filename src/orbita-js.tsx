@@ -4,6 +4,7 @@ import { loadScenario } from '@/application/use-cases/load-scenario.use-case';
 import { stopSimulation } from '@/application/use-cases/stop-simulation.use-case';
 import { SOLAR_SYSTEM_SCENARIO } from '@/shared/scenarios';
 import DocumentationPage from '@/presentation/layouts/documentation-page';
+import { DocumentLinks } from '@/presentation/layouts/documentation/document-links';
 
 const SimulatorPage = lazy(() => import('@/presentation/layouts/simulator-page'));
 
@@ -53,6 +54,8 @@ const AppHeader: Component = () => {
         >
           Simulador
         </button>
+        <div class="mx-1 hidden h-4 w-px bg-slate-800 sm:block" />
+        <DocumentLinks />
       </nav>
     </header>
   );
