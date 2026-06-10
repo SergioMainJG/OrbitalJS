@@ -267,6 +267,9 @@ const DocumentationPage: Component = () => {
             <a class="btn btn-ghost btn-sm" href="#arquitectura">
               Arquitectura
             </a>
+            <a class="btn btn-ghost btn-sm" href="#lighthouse">
+              Lighthouse
+            </a>
             <a class="btn btn-ghost btn-sm" href="#conclusiones">
               Conclusiones
             </a>
@@ -553,6 +556,35 @@ const DocumentationPage: Component = () => {
             headers={['Capa', 'Responsabilidad', 'Valor técnico']}
             rows={architectureRows}
           />
+        </Section>
+
+        <Section id="lighthouse" eyebrow="Rendimiento" title="Métricas de Lighthouse">
+          <p>
+            El rendimiento y la accesibilidad han sido optimizados para garantizar que el simulador
+            funcione con total fluidez a 60 FPS en una amplia gama de dispositivos. A continuación
+            se detallan las puntuaciones obtenidas en las auditorías de Lighthouse para entornos
+            móviles y de escritorio.
+          </p>
+          <div class="mt-8 grid gap-6 md:grid-cols-2">
+            <ScreenshotSlot
+              id="screenshot-lighthouse-mobile"
+              title="Puntuación en Dispositivos Móviles (Mobile)"
+              description="Análisis de rendimiento, accesibilidad, mejores prácticas y SEO en emulación móvil."
+              expectedCapture="Reporte Lighthouse móvil con puntuaciones óptimas."
+              imageUrl="/images/lh-cel.avif"
+              alt="Lighthouse Móvil"
+              heightClass="h-48 md:h-64"
+            />
+            <ScreenshotSlot
+              id="screenshot-lighthouse-desktop"
+              title="Puntuación en Ordenadores (Desktop)"
+              description="Análisis de rendimiento, accesibilidad, mejores prácticas y SEO en entornos de escritorio."
+              expectedCapture="Reporte Lighthouse desktop con puntuaciones óptimas."
+              imageUrl="/images/lh-lap.avif"
+              alt="Lighthouse Escritorio"
+              heightClass="h-48 md:h-64"
+            />
+          </div>
         </Section>
 
         <Section id="stack" eyebrow="Stack tecnológico" title="Tecnologías utilizadas">
